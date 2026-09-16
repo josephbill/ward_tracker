@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Backend runtime data (regenerate via seed.py / real ledger)
+backend/instance/
+backend/.env
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+ledger-sidecar/.env
+mobile-app/.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

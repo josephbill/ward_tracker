@@ -1,0 +1,18 @@
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Flask-Cors==5.0.0
+pdfplumber==0.11.4
+fonttools==4.53.1
+requests==2.32.3
+pytest==8.3.2
+
+# Optional — only needed if WHATSAPP_BACKEND=twilio or SMS_BACKEND is set to
+# use Twilio's SMS API instead of the default dummy client.
+# twilio==9.3.2
+
+# Optional — only needed if SMS_BACKEND=africas_talking.
+# africastalking==1.2.9
+
+# Optional — only needed if STT_BACKEND=openai_whisper (voice-to-text on
+# native devices; the web build transcribes client-side instead).
+# openai==1.51.0

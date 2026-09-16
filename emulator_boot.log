@@ -1,0 +1,246 @@
+INFO         | Android emulator version 37.1.11.0 (build_id 15917651) (CL:N/A)
+INFO         | Graphics backend: gfxstream
+INFO         | Found systemPath C:\Users\PC\AppData\Local\Android\Sdk\system-images\android-37.1\google_apis_playstore_ps16k\x86_64\
+INFO         | Guest usage of host flag 'VulkanVirtualQueue' will be ignored.
+INFO         | Increasing RAM size to 4096MB
+INFO         | IPv4 server found: 41.212.0.100
+INFO         | Ignore IPv6 address: a0d7:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: a0d7:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: a0d7:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: 90dd:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: 90dd:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: 90dd:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: b0e3:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: b0e3:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: b0e3:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: 80f1:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: 80f1:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: 80f1:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: a0f7:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: a0f7:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Ignore IPv6 address: a0f7:21b2:4b02:0:a0d7:21b2:4b02:0
+INFO         | Guest GLES Driver: Auto (ext controls)
+INFO         | emuglConfig_get_vulkan_hardware_gpu_support_info: Found physical GPU 'NVIDIA GeForce GTX 1050', type: VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, apiVersion: 1.4.312, driverVersion: 582.66
+
+INFO         | emuglConfig_get_vulkan_hardware_gpu_support_info: Found physical GPU 'Intel(R) HD Graphics 630', type: VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, apiVersion: 1.3.215, driverVersion: 0.404.2140
+
+INFO         | emuglConfig_init: vulkan_mode_selected:host gles_mode_selected:host
+INFO         | Checking system compatibility:
+INFO         |   Checking: hasCompatibleHypervisor
+INFO         |      Ok: Hypervisor compatibility to run avd: `Pixel_4` are met
+INFO         |   Checking: hasSufficientSystem
+INFO         |      Warning: Suggested minimum system RAM to run avd 'Pixel_4' is 16384 MiB (available: 16247 MiB)
+INFO         |   Checking: hasSufficientHwGpu
+INFO         |      Ok: Hardware GPU requirements to run avd: `Pixel_4` are passed
+INFO         |   Checking: hasSufficientDiskSpace
+INFO         |      Ok: Disk space requirements to run avd: `Pixel_4` are met
+USER_WARNING | Suggested minimum system RAM to run avd 'Pixel_4' is 16384 MiB (available: 16247 MiB).
+INFO         | Critical: Failed to load opengl32sw (The specified module could not be found.) (:0, )
+INFO         | Warning: Software OpenGL failed. Falling back to system OpenGL. (:0, )
+INFO         | Storing crashdata in: C:\Users\PC\AppData\Local\Temp\\AndroidEmulator\emu-crash-37.1.11.db, detection is enabled for process: 11100
+INFO         | Initializing gfxstream backend
+INFO         | startOpenglesRendererImpl: gpu info
+INFO         | GPU #1
+  Make: 10de
+  Model: NVIDIA GeForce GTX 1050
+  Device ID: 1c8d
+
+INFO         | Vulkan 1.4 is not supported for the guest and won't be enabled
+INFO         | Disabling implicit Vulkan layers to avoid compatibility issues. Set VK_LOADER_LAYERS_DISABLE manually to disable this behavior.
+INFO         | SharedLibrary::open for [C:\Users\PC\AppData\Local\Android\Sdk\emulator\qemu\windows-x86_64\lib64\vulkan\vulkan-1.dll]
+INFO         | SharedLibrary::open for [C:\Users\PC\AppData\Local\Android\Sdk\emulator\lib64\vulkan\vulkan-1.dll]
+INFO         | Added library: C:\Users\PC\AppData\Local\Android\Sdk\emulator\lib64\vulkan\vulkan-1.dll
+INFO         | Selecting Vulkan device: NVIDIA GeForce GTX 1050, Version: 1.4.312
+INFO         | Using Vulkan externalMemoryMode: OpaqueWin32 for VkEmulation
+INFO         | Initializing VkEmulation features:
+INFO         |     glInteropSupported: true
+INFO         |     useDeferredCommands: true
+INFO         |     createResourceWithRequirements: true
+INFO         |     useVulkanComposition: false
+INFO         |     useVulkanNativeSwapchain: false
+INFO         |     enable guestRenderDoc: false
+INFO         |     ASTC LDR emulation mode: Gpu
+INFO         |     enable ETC2 emulation: true
+INFO         |     enable Ycbcr emulation: false
+INFO         |     guestVulkanOnly: false
+INFO         |     useDedicatedAllocations: false
+INFO         |     guestVulkanMaxApiVersion: 1.3.0
+INFO         |     enableProtectedMemoryEmulation: false
+INFO         | Graphics Adapter Vendor Google (NVIDIA Corporation)
+INFO         | Graphics Adapter Android Emulator OpenGL ES Translator (NVIDIA GeForce GTX 1050/PCIe/SSE2)
+INFO         | Graphics API Version OpenGL ES 3.0 (4.5.0 NVIDIA 582.66)
+INFO         | Graphics API Extensions GL_OES_EGL_sync GL_OES_EGL_image GL_OES_EGL_image_external GL_OES_depth24 GL_OES_depth32 GL_OES_element_index_uint GL_OES_texture_float GL_OES_texture_float_linear GL_OES_compressed_paletted_texture GL_OES_compressed_ETC1_RGB8_texture GL_OES_depth_texture GL_OES_texture_half_float GL_OES_texture_half_float_linear GL_OES_packed_depth_stencil GL_OES_vertex_half_float GL_OES_texture_npot GL_OES_rgb8_rgba8 GL_OVR_multiview2 GL_EXT_multiview_texture_multisample GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_texture_format_BGRA8888 GL_APPLE_texture_format_BGRA8888 GL_EXT_texture_buffer 
+INFO         | Graphics Device Extensions N/A
+INFO         | Disabling sparse binding feature support
+INFO         | Sending adb public key [QAAAAJEpyDuPSICXLV9qkrUPngjd5vlklsbjoLM+jgKDU5tQAPkvtyDgkupOUq68vxztgKKuJWICMVFqRo4ZqK0seMPJ3EWhGm8+xsi75ZzpPxCeHO4c6mvuKNljAr63FhO3IAAr9V+3beI0uj1bO7WYAwIJzgrvJZNYVgX+dn0H+Yvxhf1q7PMekQWy5Rc+jENwkLfhtlK0EeOF9QO5AmiFlbZ9Ip5n+9oKnrjn0Gs4ZuEoAXjJTKLq0wObzgl2+fLozn52WqJWQwqM4nDweCNPbjKnkThKXf0Ptlo0D8uze9FQtNmU7Isahyao3gUCgqz0AM1Dh9gTLA7Hvkfcke9Ibv+pwSXM+R1vR4On2YiHJrgj83Q9SgVFKtB6kkfXvKpKOt/EHKuooo3R2Vmla9t+PJqSprHkYijk3EgdlmK40IoApjQl27h2ab/ThS6TbN6UbpKTfu+rSe7aktJE9pCcHYRFVelyeOsQNepyEN/YDaz9MgOrkFg5Mlk/Je+BQO3IUbG7rf/KbxIwtXYMUlI/UUXnWgQPwXxvEGgBotrDAoHtKI4IHXhGf7i3vblMCPtWAklJ7lYOvi8eEA+MhA5VMQaSMC0FJWwuZj6yHuazChhjbd5lPRcge6HqlSJcPuJ28IAqi/p2guR2DHfsnjXuGIhfvUgLzZNJo6xsh30eoEXGAx/0rwEAAQA= @unknown]
+INFO         | Userspace boot properties:
+INFO         |   androidboot.boot_devices=pci0000:00/0000:00:03.0 pci0000:00/0000:00:06.0
+INFO         |   androidboot.dalvik.vm.heapsize=576m
+INFO         |   androidboot.debug.hwui.renderer=skiagl
+INFO         |   androidboot.hardware=ranchu
+INFO         |   androidboot.hardware.gltransport=pipe
+INFO         |   androidboot.hardware.vulkan=ranchu
+INFO         |   androidboot.logcat=*:V
+INFO         |   androidboot.opengles.version=196609
+INFO         |   androidboot.qemu=1
+INFO         |   androidboot.qemu.adb.pubkey=QAAAAJEpyDuPSICXLV9qkrUPngjd5vlklsbjoLM+jgKDU5tQAPkvtyDgkupOUq68vxztgKKuJWICMVFqRo4ZqK0seMPJ3EWhGm8+xsi75ZzpPxCeHO4c6mvuKNljAr63FhO3IAAr9V+3beI0uj1bO7WYAwIJzgrvJZNYVgX+dn0H+Yvxhf1q7PMekQWy5Rc+jENwkLfhtlK0EeOF9QO5AmiFlbZ9Ip5n+9oKnrjn0Gs4ZuEoAXjJTKLq0wObzgl2+fLozn52WqJWQwqM4nDweCNPbjKnkThKXf0Ptlo0D8uze9FQtNmU7Isahyao3gUCgqz0AM1Dh9gTLA7Hvkfcke9Ibv+pwSXM+R1vR4On2YiHJrgj83Q9SgVFKtB6kkfXvKpKOt/EHKuooo3R2Vmla9t+PJqSprHkYijk3EgdlmK40IoApjQl27h2ab/ThS6TbN6UbpKTfu+rSe7aktJE9pCcHYRFVelyeOsQNepyEN/YDaz9MgOrkFg5Mlk/Je+BQO3IUbG7rf/KbxIwtXYMUlI/UUXnWgQPwXxvEGgBotrDAoHtKI4IHXhGf7i3vblMCPtWAklJ7lYOvi8eEA+MhA5VMQaSMC0FJWwuZj6yHuazChhjbd5lPRcge6HqlSJcPuJ28IAqi/p2guR2DHfsnjXuGIhfvUgLzZNJo6xsh30eoEXGAx/0rwEAAQA= @unknown
+INFO         |   androidboot.qemu.avd_name=Pixel_4
+INFO         |   androidboot.qemu.camera_hq_edge_processing=0
+INFO         |   androidboot.qemu.camera_protocol_ver=1
+INFO         |   androidboot.qemu.cpuvulkan.version=4210688
+INFO         |   androidboot.qemu.gltransport.drawFlushInterval=800
+INFO         |   androidboot.qemu.gltransport.name=pipe
+INFO         |   androidboot.qemu.hwcodec.avcdec=2
+INFO         |   androidboot.qemu.hwcodec.hevcdec=2
+INFO         |   androidboot.qemu.hwcodec.vpxdec=2
+INFO         |   androidboot.qemu.settings.system.screen_off_timeout=2147483647
+INFO         |   androidboot.qemu.skin=pixel_4
+INFO         |   androidboot.qemu.virtiowifi=1
+INFO         |   androidboot.qemu.vsync=60
+INFO         |   androidboot.serialno=EMULATOR37X1X11X0
+INFO         |   androidboot.vbmeta.digest=f424461a0a397fda72fd179bc94e871022314ef1502d4ea1133175a87b4746ed
+INFO         |   androidboot.vbmeta.hash_alg=sha256
+INFO         |   androidboot.vbmeta.size=6720
+INFO         |   androidboot.veritymode=enforcing
+WHPX on Windows 10.0.26200 detected.
+Windows Hypervisor Platform accelerator is operational
+netsimd I 09-16 09:32:51.876 external/netsim+/rust/daemon/src\rust_main.rs:93 - netsim artifacts path: "C:\\Users\\PC\\AppData\\Local\\Temp\\netsimd"
+netsimd I 09-16 09:32:51.876 external/netsim+/rust/daemon/src\rust_main.rs:96 - NetsimdArgs {
+    fd_startup_str: None,
+    no_cli_ui: true,
+    no_web_ui: true,
+    pcap: false,
+    disable_address_reuse: false,
+    hci_port: None,
+    connector_instance: None,
+    instance: None,
+    logtostderr: false,
+    dev: false,
+    forward_host_mdns: false,
+    vsock: None,
+    config: None,
+    host_dns: Some(
+        "41.212.0.100",
+    ),
+    http_proxy: None,
+    wifi_tap: None,
+    wifi: None,
+    test_beacons: false,
+    no_test_beacons: false,
+    no_shutdown: false,
+    verbose: false,
+    version: false,
+    debug: DebugArgs {
+        debug_no_traffic: false,
+        debug_no_network: false,
+        debug_no_wmedium: false,
+        debug_no_mdns_wmedium: false,
+        debug_no_guest_to_host_mdns: false,
+    },
+    rssi: None,
+}
+INFO         | Monitoring duration of emulator setup.
+WARNING      | The emulator now requires a signed jwt token for gRPC access! Use the -grpc flag if you really want an open unprotected grpc port
+INFO         | Using security allow list from: C:\Users\PC\AppData\Local\Android\Sdk\emulator\lib\emulator_access.json
+INFO         | The active JSON Web Key Sets can be found here: C:\Users\PC\AppData\Local\Temp\avd\running\11100\jwks\0d071871-8e3c-4e40-9d4c-dee0a44bb403\active.jwk
+INFO         | Scanning C:\Users\PC\AppData\Local\Temp\avd\running\11100\jwks\0d071871-8e3c-4e40-9d4c-dee0a44bb403 for jwk keys.
+INFO         | Started GRPC server at 127.0.0.1:8554, security: Local, auth: +token
+INFO         | Advertising in: C:\Users\PC\AppData\Local\Temp\avd\running\pid_11100.ini
+INFO         | Activated packet streamer for uwb emulation
+INFO         | Successfully initialized netsim WiFi
+INFO         | Activated packet streamer for bluetooth emulation
+INFO         | Setting display: 0 configuration to: 1080x2280, dpi: 440x440 
+INFO         | setDisplayActiveConfig: id:0, 1080x2280
+ERROR        | Unable to connect to adb daemon on port: 5037
+INFO         | Checking system compatibility:
+INFO         |   Checking: hasCompatibleHypervisor
+INFO         |      Ok: Hypervisor compatibility to run avd: `Pixel_4` are met
+INFO         |   Checking: hasSufficientSystem
+INFO         |      Warning: Suggested minimum system RAM to run avd 'Pixel_4' is 16384 MiB (available: 16247 MiB)
+INFO         |   Checking: hasSufficientHwGpu
+INFO         |      Ok: Hardware GPU requirements to run avd: `Pixel_4` are passed
+INFO         |   Checking: hasSufficientDiskSpace
+INFO         |      Ok: Disk space requirements to run avd: `Pixel_4` are met
+WARNING      | getEnvironmentConfig: No environment config is provided
+INFO         | getEnvironmentConfig: Using default virtual scene mode for the environment.
+INFO         | getEnvironmentConfig: Using default configuration for mode mesh3d for the environment.
+INFO         | Initializing a scene with mode: mesh3d, argument: Toren1BD.obj
+USER_INFO    | Emulator is performing a full startup. This may take upto two minutes, or more.
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_rgbcSensorValueWidget_valueChanged() (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_posture_valueChanged(int) (:0, )
+INFO         | TouchpadHolder: registering via hw_xr_led agent for instance=0000024B84668DA0
+INFO         | Warning: QObject::connect: Cannot queue arguments of type 'std::vector<android::emulation::control::SnapshotInfo>'
+(Make sure 'std::vector<android::emulation::control::SnapshotInfo>' is registered using qRegisterMetaType().) (:0, )
+INFO         | AVD supportsNativeGLES=1, supportsGuestAngle=1
+INFO         | Guest Angle is still unstable for API > 35.
+INFO         | Created extended window in 543.637ms
+ERROR        | Unable to connect to adb daemon on port: 5037
+WARNING      | adb command 'C:\Users\PC\AppData\Local\Android\Sdk\platform-tools\adb.exe -s emulator-5554 shell getprop sys.boot_completed ' failed: '* daemon not running; starting now at tcp:5037
+* daemon started successfully
+adb.exe: device offline'
+INFO         | Critical: UpdateLayeredWindowIndirect failed for ptDst=(216, 19), size=(375x26), dirty=(375x26 0, 0) (A device attached to the system is not functioning.) (:0, )
+INFO         | Critical: UpdateLayeredWindowIndirect failed for ptDst=(216, 19), size=(375x26), dirty=(375x26 0, 0) (A device attached to the system is not functioning.) (:0, )
+WARNING      | adb command 'C:\Users\PC\AppData\Local\Android\Sdk\platform-tools\adb.exe -s emulator-5554 shell getprop sys.boot_completed ' failed: 'adb.exe: device offline'
+WARNING      | adb command 'C:\Users\PC\AppData\Local\Android\Sdk\platform-tools\adb.exe -s emulator-5554 shell getprop sys.boot_completed ' failed: 'adb.exe: device offline'
+INFO         | Boot completed in 65004 ms
+INFO         | Increasing screen off timeout, logcat buffer size to 2M.
+INFO         | IPv4 server found: 41.212.0.100
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+INFO         | IPv4 server found: 41.212.0.100
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+INFO         | IPv4 server found: 41.212.0.100
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c005:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: b00b:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: d011:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: a01f:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+INFO         | Ignore IPv6 address: c025:4185:4b02:0:c005:4185:4b02:0
+ERROR        | bad color buffer handle 379
+ERROR        | bad color buffer handle 394
+ERROR        | bad color buffer handle 412
+ERROR        | adb protocol fault (couldn't read status length)
+INFO         | Wait for emulator (pid 11100) 20 seconds to shutdown gracefully before kill;you can set environment variable ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL(in seconds) to change the default value (20 seconds)
+
+INFO         | Saving with gfxstream=1
+INFO         | Saving snapshot 'default_boot' using 2472 ms
+pc_memory_init: above 4g size: 40000000
+INFO         | removeScene: scene=0x24b837246e0
+INFO         | removeAll
+WARNING      | Netsim Wifi dns:///localhost:50836 is gone due to Stream removed (CANCELLED)

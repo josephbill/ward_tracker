@@ -1,0 +1,64 @@
+{
+  "_meta": { "name": "English", "reviewed_by_native_speaker": true },
+
+  "app_name": "County Ward Tracker",
+  "select_language_prompt": "Which language would you like? Reply 1 for English, 2 for Kiswahili, 3 for Kikamba.",
+  "language_set_confirmation": "Language set to English.",
+  "main_menu": "What would you like to do?\n1. Browse ward projects\n2. Report on a project\n3. Change language",
+  "ask_ward": "Which ward are you in? (e.g. Kasikeu)",
+  "no_projects_found": "No projects found for that ward yet.",
+  "project_list_header": "Projects in {ward} ward:",
+  "project_list_item": "{index}. {project_name} ({financial_year}) - {amount}",
+  "ask_project_choice": "Reply with the number of the project you want to see.",
+  "invalid_choice": "Sorry, I didn't understand that. Please reply with a number from the list.",
+
+  "project_statement": "{project_name}, {ward} ward ({subward}). The county allocated {amount} for this in FY {financial_year}, under {sector}. The county's own record says this project is: {county_status}. Citizen-reported status: {verification_status}.",
+
+  "county_status_delivered": "Complete",
+  "county_status_ongoing": "Ongoing",
+  "county_status_not_started": "Not started",
+  "county_status_planned": "Planned for next financial year",
+
+  "verification_status_reported": "Not yet verified by residents",
+  "verification_status_confirmed": "Confirmed delivered by residents",
+  "verification_status_partially_delivered": "Residents say partially delivered",
+  "verification_status_not_delivered": "Residents say not delivered",
+  "verification_status_disputed": "Disputed - residents disagree with the county's record",
+
+  "ask_report_action": "Is this project delivered?\n1. Yes, confirmed delivered\n2. No, not delivered\n3. Partially delivered\n4. Cancel",
+  "ask_photo_optional": "You can send a photo of the project now, or reply SKIP to continue without one.",
+  "ask_location_optional": "Share your location if you can, or reply SKIP.",
+  "report_received": "Thank you. Your report on {project_name} has been recorded and logged to the tamper-proof audit trail. Reference: {ledger_ref}.",
+  "report_updated": "Thanks - your earlier report on this project has been updated.",
+  "report_rate_limited": "You've already reported on this project recently. You can update your existing report instead.",
+  "report_flagged_review": "Your report was received but has been queued for review before it counts toward the ward total.",
+
+  "phone_verify_prompt": "Enter the 6-digit code we sent to verify your number.",
+  "phone_verify_success": "Your number is verified.",
+  "phone_verify_failed": "That code didn't match. Please try again.",
+
+  "status_changed_disputed_notice": "{project_name} has moved to Disputed status: {threshold} or more independent residents reported a status different from the county's record.",
+
+  "sms_help": "COUNTY WARD TRACKER. Reply with a project code and 1 (confirmed delivered), 2 (not delivered) or 3 (partially delivered). Example: KASIKEU-2022-23-001 1",
+  "sms_ack": "Recorded: {project_name} marked {claim}. Ref {ledger_ref}. Reply HELP for instructions.",
+  "sms_unknown_project": "We don't recognise that project code. Reply HELP for instructions.",
+
+  "location_permission_prompt": "We need your location only when you submit a report, to help verify it. It is never shared publicly with your name attached.",
+  "offline_queued_notice": "No connection right now - your report is saved on this device and will be sent automatically once you're back online.",
+  "sync_complete_notice": "{count} queued report(s) synced successfully.",
+
+  "audit_submission_description": "Report submitted via {channel}: {claim}",
+  "audit_status_change_description": "Status changed from {previous_status} to {new_status}",
+  "event_type_submission": "Submission",
+  "event_type_status_change": "Status change",
+  "event_type_dispute_resolution": "Dispute resolution",
+
+  "channel_label_app": "the app",
+  "channel_label_whatsapp": "WhatsApp",
+  "channel_label_sms": "SMS",
+  "channel_label_bluetooth": "Bluetooth relay",
+
+  "claim_label_confirmed_delivered": "confirmed delivered",
+  "claim_label_not_delivered": "not delivered",
+  "claim_label_partially_delivered": "partially delivered"
+}

@@ -1,0 +1,64 @@
+{
+  "_meta": { "name": "Kiswahili", "reviewed_by_native_speaker": true },
+
+  "app_name": "Mfuatiliaji wa Miradi ya Kata",
+  "select_language_prompt": "Unapendelea lugha gani? Jibu 1 kwa Kiingereza, 2 kwa Kiswahili, 3 kwa Kikamba.",
+  "language_set_confirmation": "Lugha imewekwa kuwa Kiswahili.",
+  "main_menu": "Ungependa kufanya nini?\n1. Angalia miradi ya kata\n2. Toa taarifa kuhusu mradi\n3. Badilisha lugha",
+  "ask_ward": "Uko kata gani? (mfano: Kasikeu)",
+  "no_projects_found": "Hakuna miradi iliyopatikana kwa kata hiyo bado.",
+  "project_list_header": "Miradi katika kata ya {ward}:",
+  "project_list_item": "{index}. {project_name} ({financial_year}) - {amount}",
+  "ask_project_choice": "Jibu kwa nambari ya mradi unaotaka kuona.",
+  "invalid_choice": "Samahani, sijaelewa. Tafadhali jibu kwa nambari kutoka kwenye orodha.",
+
+  "project_statement": "{project_name}, kata ya {ward} ({subward}). Serikali ya kaunti ilitenga {amount} kwa mradi huu katika mwaka wa fedha {financial_year}, chini ya sekta ya {sector}. Rekodi ya kaunti inasema mradi huu: {county_status}. Hali iliyoripotiwa na wananchi: {verification_status}.",
+
+  "county_status_delivered": "Umekamilika",
+  "county_status_ongoing": "Unaendelea",
+  "county_status_not_started": "Haujaanza",
+  "county_status_planned": "Umepangwa kwa mwaka wa fedha ujao",
+
+  "verification_status_reported": "Bado haujathibitishwa na wakazi",
+  "verification_status_confirmed": "Wakazi wamethibitisha umekamilika",
+  "verification_status_partially_delivered": "Wakazi wanasema umekamilika kwa sehemu",
+  "verification_status_not_delivered": "Wakazi wanasema haujakamilika",
+  "verification_status_disputed": "Mzozo - wakazi hawakubaliani na rekodi ya kaunti",
+
+  "ask_report_action": "Je, mradi huu umekamilika?\n1. Ndiyo, umethibitishwa kukamilika\n2. Hapana, haujakamilika\n3. Umekamilika kwa sehemu\n4. Ghairi",
+  "ask_photo_optional": "Unaweza kutuma picha ya mradi sasa, au jibu RUKA ili kuendelea bila picha.",
+  "ask_location_optional": "Tafadhali shiriki mahali ulipo ikiwezekana, au jibu RUKA.",
+  "report_received": "Asante. Taarifa yako kuhusu {project_name} imesajiliwa na kuwekwa kwenye rekodi isiyoweza kubadilishwa. Nambari ya rejea: {ledger_ref}.",
+  "report_updated": "Asante - taarifa yako ya awali kuhusu mradi huu imesasishwa.",
+  "report_rate_limited": "Tayari umetoa taarifa kuhusu mradi huu hivi karibuni. Unaweza kusasisha taarifa yako iliyopo badala yake.",
+  "report_flagged_review": "Taarifa yako imepokelewa lakini imewekwa kwenye foleni ya ukaguzi kabla ya kuhesabiwa kwenye jumla ya kata.",
+
+  "phone_verify_prompt": "Weka nambari ya tarakimu 6 tuliyokutumia kuthibitisha nambari yako.",
+  "phone_verify_success": "Nambari yako imethibitishwa.",
+  "phone_verify_failed": "Nambari hiyo si sahihi. Tafadhali jaribu tena.",
+
+  "status_changed_disputed_notice": "{project_name} sasa iko kwenye hali ya Mzozo: wakazi {threshold} au zaidi wa kujitegemea wameripoti hali tofauti na rekodi ya kaunti.",
+
+  "sms_help": "MFUATILIAJI WA MIRADI YA KATA. Jibu kwa nambari ya mradi kisha 1 (umekamilika), 2 (haujakamilika) au 3 (umekamilika kwa sehemu). Mfano: KASIKEU-2022-23-001 1",
+  "sms_ack": "Imesajiliwa: {project_name} imewekwa {claim}. Rejea {ledger_ref}. Jibu HELP kwa maelekezo.",
+  "sms_unknown_project": "Hatutambui nambari hiyo ya mradi. Jibu HELP kwa maelekezo.",
+
+  "location_permission_prompt": "Tunahitaji mahali ulipo tu unapotuma taarifa, ili kusaidia kuithibitisha. Haitashirikiwa hadharani pamoja na jina lako.",
+  "offline_queued_notice": "Hakuna mtandao kwa sasa - taarifa yako imehifadhiwa kwenye kifaa hiki na itatumwa moja kwa moja mtandao utakaporudi.",
+  "sync_complete_notice": "Taarifa {count} zilizohifadhiwa zimetumwa kikamilifu.",
+
+  "audit_submission_description": "Taarifa ilitumwa kupitia {channel}: {claim}",
+  "audit_status_change_description": "Hali ilibadilika kutoka {previous_status} hadi {new_status}",
+  "event_type_submission": "Uwasilishaji",
+  "event_type_status_change": "Mabadiliko ya hali",
+  "event_type_dispute_resolution": "Utatuzi wa mzozo",
+
+  "channel_label_app": "programu",
+  "channel_label_whatsapp": "WhatsApp",
+  "channel_label_sms": "SMS",
+  "channel_label_bluetooth": "Kituo cha Bluetooth",
+
+  "claim_label_confirmed_delivered": "imethibitishwa kukamilika",
+  "claim_label_not_delivered": "haijakamilika",
+  "claim_label_partially_delivered": "imekamilika kwa sehemu"
+}

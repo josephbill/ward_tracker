@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "name": "Kikamba",
+    "reviewed_by_native_speaker": false,
+    "translator_note": "DRAFT — best-effort machine/non-native translation, not verified by a Kikamba speaker. Do not use in a real deployment until a native Kikamba speaker (ideally from Makueni) has reviewed and corrected every string below. Placeholder is provided so the templating engine and UI layout work identically across all three languages while a proper translation pass happens."
+  },
+
+  "app_name": "Mũtũũĩsyo wa Miradi ya Wadi",
+  "select_language_prompt": "Nĩ lugha yĩva wenda? Ĩtĩkĩla 1 Kĩngeleza, 2 Kĩswahili, 3 Kĩkamba.",
+  "language_set_confirmation": "Lugha nĩyĩekũĩtwa Kĩkamba.",
+  "main_menu": "Nĩwenda kwĩka ata?\n1. Kũsisya miradi ya wadi\n2. Kũneena ũndũ wa mradi\n3. Kũalyũla lugha",
+  "ask_ward": "Wĩ wadi yĩva? (Mbano: Kasikeu)",
+  "no_projects_found": "Vaĩ mradi ũonekanĩte wadi ĩsu ĩvinda yĩĩ.",
+  "project_list_header": "Miradi ya wadi ya {ward}:",
+  "project_list_item": "{index}. {project_name} ({financial_year}) - {amount}",
+  "ask_project_choice": "Ĩtĩkĩla na nambari ya mradi weendaa kwona.",
+  "invalid_choice": "Nĩtwĩsũvya, ndũkwataa ũu wasya. Ĩtĩkĩla na nambari kuma orodha-nĩ.",
+
+  "project_statement": "{project_name}, wadi ya {ward} ({subward}). Kaunti nĩyatetee {amount} kwondu wa mradi ũũ mwakanĩ wa mbesa {financial_year}, ũthĩnĩ wa {sector}. Ĩvangũ ya kaunti yaĩtye mradi ũũ: {county_status}. Ũndũ andũ ma wadi maneenaa: {verification_status}.",
+
+  "county_status_delivered": "Nĩwaĩthilwa",
+  "county_status_ongoing": "Nĩũthũkũma",
+  "county_status_not_started": "Ndwambĩĩie",
+  "county_status_planned": "Nĩwapangĩtwe kwa mwaka wa mbesa ũkasa",
+
+  "verification_status_reported": "Ndwĩthĩĩtwe nĩ andũ ma wadi",
+  "verification_status_confirmed": "Andũ ma wadi nĩmeethĩtye nĩwaĩthilwa",
+  "verification_status_partially_delivered": "Andũ maneenaa nĩwaĩthilwa vaĩ kĩnini",
+  "verification_status_not_delivered": "Andũ maneenaa ndwaĩthilwa",
+  "verification_status_disputed": "Mĩvano - andũ ma wadi mailyũlanĩte na ĩvangũ ya kaunti",
+
+  "ask_report_action": "Ĩĩ, mradi ũũ nĩwaĩthilwa?\n1. Ĩĩ, nĩwaĩthilwa - nĩnyĩthĩĩtye\n2. Aa, ndwaĩthilwa\n3. Nĩwaĩthilwa kĩnini\n4. Yeka",
+  "ask_photo_optional": "No ũtũme veni ya mradi yĩĩ ĩvinda, kana wĩtĩkĩle SKIP kũendeea ũtena veni.",
+  "ask_location_optional": "Nĩtũvoya woonanie vala wĩ ethiwa nĩwĩtonya, kana wĩtĩkĩle SKIP.",
+  "report_received": "Nĩtwakwataa. Ũneeni waku wa {project_name} nĩwaandĩkwa na kũĩkwa mbandĩko-nĩ ĩte ĩngĩalyũlwa. Nambari: {ledger_ref}.",
+  "report_updated": "Nĩtwakwataa - ũneeni waku wa mbee wa mradi ũũ nĩwaalyũlwa.",
+  "report_rate_limited": "Nĩwaneenete ũndũ wa mradi ũũ ĩvinda ĩsu ya vitũ. No ũalyũle ũneeni waku ũla wĩ vo.",
+  "report_flagged_review": "Ũneeni waku nĩwakwatwa ĩndĩ nĩwĩkĩtwe kũlilinda kũsisyũwa mbee wa kũvalũkwa kĩyendo kya wadi.",
+
+  "phone_verify_prompt": "Ĩkĩla nambari ya namba 6 twakũtũmĩie kũthibitisya namba yaku.",
+  "phone_verify_success": "Namba yaku nĩyĩthibitisyĩtwe.",
+  "phone_verify_failed": "Nambari ĩsu ndyaĩlana. Nĩtũvoya wĩgerie ĩngĩ.",
+
+  "status_changed_disputed_notice": "{project_name} nĩyathi mĩvano-nĩ: andũ {threshold} kana kwĩanĩa ma wĩyũmbanu maneenete ũndũ ũtaĩlanaa na ĩvangũ ya kaunti.",
+
+  "sms_help": "MŨTŨŨĨSYO WA MIRADI YA WADI. Ĩtĩkĩla na nambari ya mradi na 1 (nĩwaĩthilwa), 2 (ndwaĩthilwa) kana 3 (nĩwaĩthilwa kĩnini). Mbano: KASIKEU-2022-23-001 1",
+  "sms_ack": "Nĩkwandĩkĩtwe: {project_name} nĩyeekĩtwe {claim}. Nambari {ledger_ref}. Ĩtĩkĩla HELP kwa ũtungĩĩo.",
+  "sms_unknown_project": "Ndũtũmanyĩkĩte nambari ĩsu ya mradi. Ĩtĩkĩla HELP kwa ũtungĩĩo.",
+
+  "location_permission_prompt": "Twenda kũmanya vala wĩ o ĩvinda ũtũma ũneeni, kũtetheesya kũũthibitisya. Ndĩkatũmwa handũ ha andũ onthe vamwe na ĩsyĩtwa yaku.",
+  "offline_queued_notice": "Vaĩ mtandao ĩvinda yĩĩ - ũneeni waku nĩwĩkĩtwe kĩthengũ-nĩ na ũkatũmwa ĩngĩ mtandao waya.",
+  "sync_complete_notice": "Maneeni {count} maĩkĩtye nĩmatũmĩtwe nesa.",
+
+  "audit_submission_description": "Ũneeni watũmwa kwĩsĩla {channel}: {claim}",
+  "audit_status_change_description": "Ũndũ waalyũlwa kuma {previous_status} kwĩka {new_status}",
+  "event_type_submission": "Ũtũmi",
+  "event_type_status_change": "Ũalyũlyo wa ũndũ",
+  "event_type_dispute_resolution": "Ũthũkũmi wa mĩvano",
+
+  "channel_label_app": "app",
+  "channel_label_whatsapp": "WhatsApp",
+  "channel_label_sms": "SMS",
+  "channel_label_bluetooth": "Ũnini wa Bluetooth",
+
+  "claim_label_confirmed_delivered": "nĩnyĩthĩĩtye nĩwaĩthilwa",
+  "claim_label_not_delivered": "ndwaĩthilwa",
+  "claim_label_partially_delivered": "nĩwaĩthilwa kĩnini"
+}

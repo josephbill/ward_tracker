@@ -1,0 +1,16 @@
+{
+  "name": "makueni-ledger-sidecar",
+  "version": "1.0.0",
+  "description": "Small HTTP sidecar that anchors report-event hashes to a Hedera Consensus Service topic on testnet, using Hedera's JavaScript SDK. The Flask backend talks to this over HTTP via LEDGER_BACKEND=hedera_sidecar instead of calling Hedera directly, since Hedera's JS SDK is more mature/better documented than the Python options (see Section 5 of the spec).",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "create-topic": "node create_topic.js"
+  },
+  "dependencies": {
+    "@hashgraph/sdk": "^2.53.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  }
+}
