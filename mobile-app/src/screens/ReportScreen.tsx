@@ -19,7 +19,7 @@ const CLAIM_OPTIONS: { key: Claim; labelKey: string }[] = [
 export default function ReportScreen({ route, navigation }: any) {
   const { projectId, projectName } = route.params;
   const { lang, phone, phoneVerified } = useAppState();
-  const l = lang || "en";
+  const l = lang || "sw";
 
   const [claim, setClaim] = useState<Claim | null>(null);
   const [remarks, setRemarks] = useState("");
@@ -103,6 +103,9 @@ export default function ReportScreen({ route, navigation }: any) {
           key={opt.key}
           style={[styles.claimButton, claim === opt.key && styles.claimButtonSelected]}
           onPress={() => setClaim(opt.key)}
+          accessibilityRole="radio"
+          accessibilityState={{ selected: claim === opt.key }}
+          accessibilityLabel={t(l, opt.labelKey)}
         >
           <Text style={[styles.claimButtonText, claim === opt.key && styles.claimButtonTextSelected]}>
             {t(l, opt.labelKey)}
@@ -123,18 +126,18 @@ export default function ReportScreen({ route, navigation }: any) {
 
       <Text style={styles.sectionLabel}>{t(l, "addPhotoOptional")}</Text>
       <View style={styles.row}>
-        <Pressable style={styles.smallButton} onPress={() => pickPhoto(true)}>
+        <Pressable style={styles.smallButton} onPress={() => pickPhoto(true)} accessibilityRole="button" accessibilityLabel={t(l, "takePhoto")}>
           <Text style={styles.smallButtonText}>{t(l, "takePhoto")}</Text>
         </Pressable>
-        <Pressable style={styles.smallButton} onPress={() => pickPhoto(false)}>
+        <Pressable style={styles.smallButton} onPress={() => pickPhoto(false)} accessibilityRole="button" accessibilityLabel={t(l, "choosePhoto")}>
           <Text style={styles.smallButtonText}>{t(l, "choosePhoto")}</Text>
         </Pressable>
       </View>
-      {photoUri && <Image source={{ uri: photoUri }} style={styles.photoPreview} />}
+      {photoUri && <Image source={{ uri: photoUri }} style={styles.photoPreview} accessibilityLabel={t(l, "addPhotoOptional")} />}
 
       <Text style={styles.sectionLabel}>{t(l, "shareLocationOptional")}</Text>
       <Text style={styles.explainer}>{t(l, "locationPermissionExplainer")}</Text>
-      <Pressable style={styles.smallButton} onPress={shareLocation}>
+      <Pressable style={styles.smallButton} onPress={shareLocation} accessibilityRole="button" accessibilityLabel={t(l, "shareLocationOptional")}>
         <Text style={styles.smallButtonText}>{location ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : t(l, "shareLocationOptional")}</Text>
       </Pressable>
 
@@ -142,6 +145,9 @@ export default function ReportScreen({ route, navigation }: any) {
         style={[styles.submitButton, (!claim || submitting) && styles.submitButtonDisabled]}
         onPress={submit}
         disabled={!claim || submitting}
+        accessibilityRole="button"
+        accessibilityLabel={t(l, "submitReport")}
+        accessibilityState={{ disabled: !claim || submitting }}
       >
         {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>{t(l, "submitReport")}</Text>}
       </Pressable>
@@ -160,7 +166,7 @@ const styles = StyleSheet.create({
   sectionLabel: { fontSize: 13, color: "#555", marginTop: 18, marginBottom: 6 },
   explainer: { fontSize: 12, color: "#888", marginBottom: 8 },
   row: { flexDirection: "row", gap: 8 },
-  smallButton: { borderWidth: 1, borderColor: "#0b6e4f", borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14 },
+  smallButton: { borderWidth: 1, borderColor: "#0b6e4f", borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14, minHeight: 44, justifyContent: "center" },
   smallButtonText: { color: "#0b6e4f", fontWeight: "600", fontSize: 13 },
   remarksInput: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10, fontSize: 14, minHeight: 70, textAlignVertical: "top", marginBottom: 8 },
   photoPreview: { width: 100, height: 100, borderRadius: 8, marginTop: 10 },

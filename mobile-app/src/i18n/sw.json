@@ -127,5 +127,21 @@
 
   "navigationMenu": "Menyu",
   "navWardProjects": "Miradi ya Kata",
-  "changeCounty": "Badilisha kaunti"
+  "changeCounty": "Badilisha kaunti",
+
+  "privacyNotice": "Taarifa zako zinahifadhiwa chini ya kitambulisho kisichojulikana, si jina lako. Data ya mahali/kifaa huondolewa kwenye picha na GPS yako inahifadhiwa tu kwa usahihi wa kiwango cha mtaa. Angalia Sheria ya Ulinzi wa Data ya Kenya 2019 na Ofisi ya Kamishna wa Ulinzi wa Data (ODPC, odpc.go.ke) kwa haki zako kuhusu data hii.",
+
+  "lastUpdatedLabel": "Ilisasishwa mara ya mwisho",
+  "sourceReferenceLabel": "Chanzo",
+
+  "whatYouCanDoNotice": "Mradi huu una Mzozo. Hivi ndivyo unavyoweza kufanya.",
+  "whatYouCanDo": "Hatua zifuatazo",
+  "escalationMenuPrompt": "Ni ipi inayolingana zaidi na unachoripoti?",
+  "escalationSituation_no_response": "Hakuna aliyejibu kuhusu mradi huu",
+  "escalationSituation_financial_accountability": "Fedha zilitengwa lakini kazi haijafanyika",
+  "escalationSituation_corruption": "Nashuku ufisadi (fedha kuelekezwa vibaya, gharama kuongezwa, mkandarasi hewa)",
+  "escalationSituation_maladministration": "Kushindwa kwa jumla kutoa huduma (si ufisadi)",
+  "escalationNoReportYet": "bado hakuna — taja nambari ya mradi hapa chini utakapowasiliana nao",
+  "escalationResponse": "Wasiliana na: {institution}\n{detail}\n\nUtakapowasiliana, taja: {projectName} ({projectId}). Nambari ya rejea ya taarifa yako: {reportId}.",
+  "escalationBack": "Chagua hali tofauti"
 }

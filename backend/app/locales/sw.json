@@ -25,8 +25,8 @@
   "verification_status_not_delivered": "Wakazi wanasema haujakamilika",
   "verification_status_disputed": "Mzozo - wakazi hawakubaliani na rekodi ya kaunti",
 
-  "ask_report_action": "Je, mradi huu umekamilika?\n1. Ndiyo, umethibitishwa kukamilika\n2. Hapana, haujakamilika\n3. Umekamilika kwa sehemu\n4. Ghairi",
-  "ask_photo_optional": "Unaweza kutuma picha ya mradi sasa, au jibu RUKA ili kuendelea bila picha.",
+  "ask_report_action": "Je, mradi huu umekamilika?\n1. Ndiyo, umethibitishwa kukamilika\n2. Hapana, haujakamilika\n3. Umekamilika kwa sehemu\n4. Ghairi\nJibu E wakati wowote kuona hatua zifuatazo kwa mradi wenye mzozo.",
+  "ask_photo_or_voice_optional": "Unaweza kutuma picha AU ujumbe wa sauti unaoeleza ulichokiona, au jibu RUKA kuendelea bila hivyo. Picha haihitajiki kutoa taarifa.",
   "ask_location_optional": "Tafadhali shiriki mahali ulipo ikiwezekana, au jibu RUKA.",
   "report_received": "Asante. Taarifa yako kuhusu {project_name} imesajiliwa na kuwekwa kwenye rekodi isiyoweza kubadilishwa. Nambari ya rejea: {ledger_ref}.",
   "report_updated": "Asante - taarifa yako ya awali kuhusu mradi huu imesasishwa.",
@@ -60,5 +60,19 @@
 
   "claim_label_confirmed_delivered": "imethibitishwa kukamilika",
   "claim_label_not_delivered": "haijakamilika",
-  "claim_label_partially_delivered": "imekamilika kwa sehemu"
+  "claim_label_partially_delivered": "imekamilika kwa sehemu",
+
+  "privacy_notice": "Taarifa zako zinahifadhiwa chini ya kitambulisho kisichojulikana, si jina lako. Data ya mahali/kifaa huondolewa kwenye picha na eneo lako la GPS linahifadhiwa tu kwa usahihi wa kiwango cha mtaa. Angalia Sheria ya Ulinzi wa Data ya Kenya 2019 na Ofisi ya Kamishna wa Ulinzi wa Data (ODPC, odpc.go.ke) kwa haki zako kuhusu data hii.",
+
+  "project_last_updated": "Ilisasishwa mara ya mwisho: {date}",
+  "project_source": "Chanzo: {source_reference}",
+
+  "escalation_available_notice": "Mradi huu una Mzozo. Jibu E kuona hatua zifuatazo.",
+  "escalation_menu_header": "Ni ipi inayolingana zaidi na unachoripoti?",
+  "escalation_situation_no_response": "Hakuna aliyejibu kuhusu mradi huu",
+  "escalation_situation_financial_accountability": "Fedha zilitengwa lakini kazi haijafanyika",
+  "escalation_situation_corruption": "Nashuku ufisadi (fedha kuelekezwa vibaya, gharama kuongezwa, mkandarasi hewa)",
+  "escalation_situation_maladministration": "Kushindwa kwa jumla kutoa huduma (si ufisadi)",
+  "escalation_no_report_yet": "bado hakuna — taja nambari ya mradi hapo juu utakapowasiliana nao",
+  "escalation_response": "{situation_label}\nWasiliana na: {institution}\n{detail}\n\nUtakapowasiliana, taja: {project_name} ({project_id}). Nambari ya rejea ya taarifa yako: {report_id}."
 }

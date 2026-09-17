@@ -17,6 +17,7 @@ interface Props {
   onSelect: (value: string) => void;
   loading?: boolean;
   emptyText?: string;
+  footer?: string; // small print below the list, e.g. a privacy notice
 }
 
 /**
@@ -35,6 +36,7 @@ export default function SearchableSelectList({
   onSelect,
   loading,
   emptyText,
+  footer,
 }: Props) {
   const [query, setQuery] = useState("");
 
@@ -70,6 +72,7 @@ export default function SearchableSelectList({
         onChangeText={setQuery}
         autoCorrect={false}
         autoCapitalize="none"
+        accessibilityLabel={searchPlaceholder}
       />
       {loading ? (
         <ActivityIndicator style={{ marginTop: 24 }} color="#0b6e4f" />
@@ -85,6 +88,8 @@ export default function SearchableSelectList({
             <Pressable
               style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
               onPress={() => onSelect(item.value)}
+              accessibilityRole="button"
+              accessibilityLabel={item.sublabel ? `${item.label}, ${item.sublabel}` : item.label}
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowLabel}>{item.label}</Text>
@@ -95,6 +100,7 @@ export default function SearchableSelectList({
           )}
         />
       )}
+      {footer ? <Text style={styles.footer}>{footer}</Text> : null}
     </SafeAreaView>
   );
 }
@@ -123,4 +129,5 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: 16, fontWeight: "600", color: "#14231e" },
   rowSublabel: { fontSize: 13, color: "#777", marginTop: 2 },
   chevron: { fontSize: 22, color: "#0b6e4f", marginLeft: 8 },
+  footer: { fontSize: 11, color: "#8a938f", textAlign: "center", marginTop: 8, marginBottom: 4, lineHeight: 16 },
 });

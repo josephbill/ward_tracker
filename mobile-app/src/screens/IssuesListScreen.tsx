@@ -6,7 +6,7 @@ import { fetchIssues, Issue } from "../api/client";
 
 export default function IssuesListScreen({ navigation }: any) {
   const { lang, county, ward } = useAppState();
-  const l = lang || "en";
+  const l = lang || "sw";
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
 

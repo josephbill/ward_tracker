@@ -127,5 +127,21 @@
 
   "navigationMenu": "Menu",
   "navWardProjects": "Ward Projects",
-  "changeCounty": "Change county"
+  "changeCounty": "Change county",
+
+  "privacyNotice": "Your reports are stored under an anonymous ID, never your name. Photos have location/device data removed and GPS is only kept to neighbourhood-level precision. See Kenya's Data Protection Act 2019 and the Office of the Data Protection Commissioner (ODPC, odpc.go.ke) for your rights over this data.",
+
+  "lastUpdatedLabel": "Last updated",
+  "sourceReferenceLabel": "Source",
+
+  "whatYouCanDoNotice": "This project is Disputed. Here's what you can do next.",
+  "whatYouCanDo": "What you can do next",
+  "escalationMenuPrompt": "What best matches what you're reporting?",
+  "escalationSituation_no_response": "No one has responded about this project",
+  "escalationSituation_financial_accountability": "Money was allocated but the work isn't done",
+  "escalationSituation_corruption": "I suspect corruption (diverted funds, inflated costs, a ghost contractor)",
+  "escalationSituation_maladministration": "A general service-delivery failure (not corruption)",
+  "escalationNoReportYet": "none yet — mention the project code below when you contact them",
+  "escalationResponse": "Contact: {institution}\n{detail}\n\nWhen you get in touch, mention: {projectName} ({projectId}). Your report reference: {reportId}.",
+  "escalationBack": "Choose a different situation"
 }

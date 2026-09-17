@@ -128,5 +128,21 @@
 
   "navigationMenu": "Menyu",
   "navWardProjects": "Miradi ya Wadi",
-  "changeCounty": "Alyũla kaunti"
+  "changeCounty": "Alyũla kaunti",
+
+  "privacyNotice": "Maneeni maku maĩkĩtye ũthĩnĩ wa ĩsyĩtwa ĩtesĩ manyĩkaa, ti ĩsyĩtwa yaku. Ũmanyi wa handũ/kĩlũngu nĩweumagya veni-nĩ na GPS yaku ĩĩkagwa o na ũsao wa wadi. Sisya Sheria ya Kenya ya Ũvitĩo wa Data 2019 na Ofisi ya Kamishina wa Ũvitĩo wa Data (ODPC, odpc.go.ke) kwa mavinya maku ũndũ wa data ĩsu.",
+
+  "lastUpdatedLabel": "Ĩlĩ yaalyũlwa",
+  "sourceReferenceLabel": "Kuma",
+
+  "whatYouCanDoNotice": "Mradi ũũ wĩ mĩvano-nĩ. Ũũ nĩ ũndũ watonya kwĩka.",
+  "whatYouCanDo": "Ũndũ wa kwĩka ĩlĩ",
+  "escalationMenuPrompt": "Nĩyĩva yĩtaĩlana na ũndũ ũneenaa?",
+  "escalationSituation_no_response": "Vaĩ mũndũ waneenete ũndũ wa mradi ũũ",
+  "escalationSituation_financial_accountability": "Mbesa nĩyatetee ĩndĩ wĩa ndwathũkũmwa",
+  "escalationSituation_corruption": "Nĩngwĩkĩlaa mĩlomo (mbesa kũalyũlwa, valyũ kũongelwa, mũthũkũmi wa v'ĩ)",
+  "escalationSituation_maladministration": "Ũndũ wa kũthũkũmwa vyũ (ti mĩlomo)",
+  "escalationNoReportYet": "vaĩ vitũ — tavya nambari ya mradi vaita wĩanĩanĩsya nao",
+  "escalationResponse": "Wĩanĩanĩsya na: {institution}\n{detail}\n\nWaanĩanĩsya, tavya: {projectName} ({projectId}). Nambari ya ũneeni waku: {reportId}.",
+  "escalationBack": "Sakua ũndũ ũngĩ"
 }

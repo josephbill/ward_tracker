@@ -7,6 +7,16 @@ requires touching translation strings, only the source data.
 Numbers, currency and dates are formatted the same locale-consistent way
 (Ksh with thousands separators, ISO-ish dates) regardless of UI language, per
 Section 4 of the spec — money should look like money in every language.
+
+Adding a 4th language beyond this pilot's English/Kiswahili/Kikamba needs no
+code changes: drop a new locales/<code>.json with the same keys as en.json
+(every t() call falls back to English for a missing key, so a partial first
+pass still renders), add entries for it to _SECTOR_TRANSLATIONS and
+_SUBWARD_TRANSLATIONS below if you want those translated too (they fall back
+to the raw English value otherwise), and add "<code>" to
+Config.SUPPORTED_LANGUAGES. mobile-app/src/i18n/ follows the identical
+pattern (en.json/sw.json/kam.json + i18n.ts's SUPPORTED_LANGUAGES) since the
+app renders template+variable strings the same way the backend does.
 """
 from __future__ import annotations
 
@@ -75,6 +85,13 @@ def format_ksh(amount: int) -> str:
 
 def format_fy(financial_year: str) -> str:
     return financial_year  # already "2022/23" style, kept as-is across locales
+
+
+def format_date(dt) -> str:
+    """Locale-consistent date formatting ('2026-09-17'), same ISO-ish style
+    as format_ksh/format_fy — a date shouldn't change shape by language any
+    more than a currency amount should."""
+    return dt.strftime("%Y-%m-%d") if dt else ""
 
 
 def t(lang: str, key: str, **variables) -> str:

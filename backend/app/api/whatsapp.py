@@ -1,6 +1,5 @@
-from flask import Blueprint, request
+from flask import Blueprint, current_app, request
 
-from ..config import Config
 from ..services.channels import get_whatsapp_client
 from ..services.whatsapp_bot import IncomingMessage, handle_message
 
@@ -17,16 +16,20 @@ def whatsapp_webhook():
     from_phone = form.get("From", "").replace("whatsapp:", "").strip()
     body = form.get("Body", "")
     media_path = form.get("MediaUrl0")
+    media_content_type = form.get("MediaContentType0")
     lat = form.get("Latitude", type=float)
     lon = form.get("Longitude", type=float)
 
     if not from_phone:
         return {"error": "missing From"}, 400
 
-    msg = IncomingMessage(from_phone=from_phone, text=body, media_path=media_path, latitude=lat, longitude=lon)
+    msg = IncomingMessage(
+        from_phone=from_phone, text=body, media_path=media_path,
+        media_content_type=media_content_type, latitude=lat, longitude=lon,
+    )
     replies = handle_message(msg)
 
-    client = get_whatsapp_client(Config)
+    client = get_whatsapp_client(current_app.config_class)
     for reply in replies:
         client.send_text(from_phone, reply)
 

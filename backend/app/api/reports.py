@@ -2,7 +2,6 @@ import json
 
 from flask import Blueprint, current_app, jsonify, request
 
-from ..config import Config
 from ..models import Project, Report, Reporter, StatusEvent
 from ..services.ledger import get_ledger_client
 from ..services.report_service import UnknownProjectError, submit_report
@@ -17,11 +16,12 @@ VALID_CHANNELS = {"app", "whatsapp", "sms", "bluetooth"}
 
 
 def _save_photo(file_storage) -> str | None:
-    return save_photo(file_storage, Config.PHOTO_UPLOAD_DIR)
+    return save_photo(file_storage, current_app.config_class.PHOTO_UPLOAD_DIR)
 
 
 @reports_bp.post("/reports")
 def create_report():
+    config = current_app.config_class
     if request.content_type and "multipart/form-data" in request.content_type:
         form = request.form
         project_id = form.get("project_id")
@@ -30,7 +30,7 @@ def create_report():
         channel = form.get("channel", "app")
         gps_lat = form.get("gps_lat", type=float)
         gps_lon = form.get("gps_lon", type=float)
-        lang = form.get("lang", Config.DEFAULT_LANGUAGE)
+        lang = form.get("lang", config.DEFAULT_LANGUAGE)
         remarks = form.get("remarks") or None
         photo_path = _save_photo(request.files.get("photo"))
     else:
@@ -41,7 +41,7 @@ def create_report():
         channel = data.get("channel", "app")
         gps_lat = data.get("gps_lat")
         gps_lon = data.get("gps_lon")
-        lang = data.get("lang", Config.DEFAULT_LANGUAGE)
+        lang = data.get("lang", config.DEFAULT_LANGUAGE)
         remarks = data.get("remarks") or None
         photo_path = None  # JSON callers send photos separately via multipart
 
@@ -50,8 +50,8 @@ def create_report():
                          "valid_claims": sorted(VALID_CLAIMS)}), 400
     if channel not in VALID_CHANNELS:
         channel = "app"
-    if lang not in Config.SUPPORTED_LANGUAGES:
-        lang = Config.DEFAULT_LANGUAGE
+    if lang not in config.SUPPORTED_LANGUAGES:
+        lang = config.DEFAULT_LANGUAGE
 
     try:
         result = submit_report(
@@ -93,10 +93,11 @@ def my_reports():
     submitting a report — since a phone number resolves to a specific
     person's history. Never exposes other reporters' data: only this exact
     phone's hash is looked up."""
+    config = current_app.config_class
     raw_phone = request.args.get("phone", "")
-    lang = request.args.get("lang", Config.DEFAULT_LANGUAGE)
-    if lang not in Config.SUPPORTED_LANGUAGES:
-        lang = Config.DEFAULT_LANGUAGE
+    lang = request.args.get("lang", config.DEFAULT_LANGUAGE)
+    if lang not in config.SUPPORTED_LANGUAGES:
+        lang = config.DEFAULT_LANGUAGE
     if not raw_phone:
         return jsonify({"error": "phone is required"}), 400
 
@@ -148,16 +149,17 @@ def _render_event_description(event: StatusEvent, payload: dict, lang: str) -> s
 
 @reports_bp.get("/projects/<project_id>/audit-trail")
 def audit_trail(project_id: str):
-    lang = request.args.get("lang", Config.DEFAULT_LANGUAGE)
-    if lang not in Config.SUPPORTED_LANGUAGES:
-        lang = Config.DEFAULT_LANGUAGE
+    config = current_app.config_class
+    lang = request.args.get("lang", config.DEFAULT_LANGUAGE)
+    if lang not in config.SUPPORTED_LANGUAGES:
+        lang = config.DEFAULT_LANGUAGE
 
     project = Project.query.get(project_id)
     if project is None:
         return jsonify({"error": "not_found"}), 404
 
     events = StatusEvent.query.filter_by(project_id=project_id).order_by(StatusEvent.created_at).all()
-    ledger = get_ledger_client(Config)
+    ledger = get_ledger_client(config)
 
     trail = []
     for e in events:

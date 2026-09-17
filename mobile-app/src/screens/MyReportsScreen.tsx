@@ -6,7 +6,7 @@ import { fetchMyReports, MyReport } from "../api/client";
 
 export default function MyReportsScreen({ navigation }: any) {
   const { lang, phone, phoneVerified } = useAppState();
-  const l = lang || "en";
+  const l = lang || "sw";
   const [reports, setReports] = useState<MyReport[]>([]);
   const [loading, setLoading] = useState(true);
 

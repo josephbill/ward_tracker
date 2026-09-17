@@ -15,6 +15,8 @@ Design notes (Section 5 & 6 of the spec):
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy.orm import object_session
+
 from .db import db
 
 
@@ -52,6 +54,12 @@ class Project(db.Model):
     county_remarks = db.Column(db.Text, nullable=False, default="")
     source_document = db.Column(db.String(255), nullable=False)
     source_page = db.Column(db.Integer, nullable=False)
+    # A specific citation within source_document (e.g. which table/section a
+    # row came from) — source_document+source_page already narrow it to a
+    # page, this narrows it to the exact list a resident could go look up
+    # themselves. Nullable/defaulted so existing rows and the test fixtures
+    # that predate this field still load fine; populated by pdf_ingest.py.
+    source_reference = db.Column(db.String(255), nullable=False, default="")
 
     # Citizen-facing aggregate status: reported | confirmed | partially_delivered
     # | not_delivered | disputed. Starts at "reported" (Section 5) and is
@@ -74,7 +82,22 @@ class Project(db.Model):
             return self.project_name_kam
         return self.project_name
 
+    def last_updated_at(self):
+        """Timestamp of the most recent audit-trail event for this project
+        (a new report counts as an update even if it didn't flip the status —
+        a resident asking "when was this last touched?" means either), falling
+        back to when the record was first ingested if it has no events yet.
+        A transient/detached instance (not yet added to a session, or built
+        directly like Project(...) in tests) has no queryable `events`
+        relationship — fall back the same way rather than erroring, since
+        to_dict() is expected to work on those too."""
+        if object_session(self) is None:
+            return self.created_at
+        latest = self.events.order_by(StatusEvent.created_at.desc()).first()
+        return latest.created_at if latest is not None else self.created_at
+
     def to_dict(self) -> dict:
+        last_updated = self.last_updated_at()
         return {
             "id": self.id,
             "ward": self.ward,
@@ -91,7 +114,9 @@ class Project(db.Model):
             "county_remarks": self.county_remarks,
             "source_document": self.source_document,
             "source_page": self.source_page,
+            "source_reference": self.source_reference,
             "verification_status": self.verification_status,
+            "last_updated_at": last_updated.isoformat() if last_updated else None,
         }
 
 

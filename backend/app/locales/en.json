@@ -25,8 +25,8 @@
   "verification_status_not_delivered": "Residents say not delivered",
   "verification_status_disputed": "Disputed - residents disagree with the county's record",
 
-  "ask_report_action": "Is this project delivered?\n1. Yes, confirmed delivered\n2. No, not delivered\n3. Partially delivered\n4. Cancel",
-  "ask_photo_optional": "You can send a photo of the project now, or reply SKIP to continue without one.",
+  "ask_report_action": "Is this project delivered?\n1. Yes, confirmed delivered\n2. No, not delivered\n3. Partially delivered\n4. Cancel\nReply E any time to see what you can do next about a disputed project.",
+  "ask_photo_or_voice_optional": "You can send a photo OR a voice note describing what you saw, or reply SKIP to continue without either. A photo is never required to submit a report.",
   "ask_location_optional": "Share your location if you can, or reply SKIP.",
   "report_received": "Thank you. Your report on {project_name} has been recorded and logged to the tamper-proof audit trail. Reference: {ledger_ref}.",
   "report_updated": "Thanks - your earlier report on this project has been updated.",
@@ -39,7 +39,7 @@
 
   "status_changed_disputed_notice": "{project_name} has moved to Disputed status: {threshold} or more independent residents reported a status different from the county's record.",
 
-  "sms_help": "COUNTY WARD TRACKER. Reply with a project code and 1 (confirmed delivered), 2 (not delivered) or 3 (partially delivered). Example: KASIKEU-2022-23-001 1",
+  "sms_help": "COUNTY WARD TRACKER. Reply with a project code and 1 (confirmed delivered), 2 (not delivered) or 3 (partially delivered). Example: KASIKEU-2022-23-001 1. For what to do about a disputed project, text NEXT <code> <1-4>.",
   "sms_ack": "Recorded: {project_name} marked {claim}. Ref {ledger_ref}. Reply HELP for instructions.",
   "sms_unknown_project": "We don't recognise that project code. Reply HELP for instructions.",
 
@@ -60,5 +60,19 @@
 
   "claim_label_confirmed_delivered": "confirmed delivered",
   "claim_label_not_delivered": "not delivered",
-  "claim_label_partially_delivered": "partially delivered"
+  "claim_label_partially_delivered": "partially delivered",
+
+  "privacy_notice": "Your reports are stored under an anonymous ID, never your name. Photos have location/device data removed and your GPS is only kept to neighbourhood-level precision. See Kenya's Data Protection Act 2019 and the Office of the Data Protection Commissioner (ODPC, odpc.go.ke) for your rights over this data.",
+
+  "project_last_updated": "Last updated: {date}",
+  "project_source": "Source: {source_reference}",
+
+  "escalation_available_notice": "This project is Disputed. Reply E to see what you can do next.",
+  "escalation_menu_header": "What best matches what you're reporting?",
+  "escalation_situation_no_response": "No one has responded about this project",
+  "escalation_situation_financial_accountability": "Money was allocated but the work isn't done",
+  "escalation_situation_corruption": "I suspect corruption (diverted funds, inflated costs, a ghost contractor)",
+  "escalation_situation_maladministration": "A general service-delivery failure (not corruption)",
+  "escalation_no_report_yet": "none yet — mention the project code above when you contact them",
+  "escalation_response": "{situation_label}\nContact: {institution}\n{detail}\n\nWhen you get in touch, mention: {project_name} ({project_id}). Your report reference: {report_id}."
 }

@@ -14,9 +14,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..config import Config
+from flask import current_app
+
 from ..models import Project
-from .report_service import UnknownProjectError, submit_report
+from .escalation import render_escalation_menu, render_escalation_response, situation_from_choice
+from .report_service import UnknownProjectError, latest_active_report_id, submit_report
+from .stt import get_stt_client
 from .translation import format_ksh, supported_languages, t
 
 _LANG_CHOICES = {"1": "en", "2": "sw", "3": "kam"}
@@ -35,6 +38,10 @@ class Session:
     project_id: str | None = None
     claim: str | None = None
     photo_path: str | None = None
+    # Set when the report step's media turns out to be a voice note rather
+    # than a photo (see _handle_report_photo) — transcribed via the same STT
+    # client the app's voice-to-text button uses, then submitted as remarks.
+    remarks: str | None = None
 
 
 _sessions: dict[str, Session] = {}
@@ -58,6 +65,7 @@ class IncomingMessage:
     from_phone: str
     text: str = ""
     media_path: str | None = None
+    media_content_type: str | None = None
     latitude: float | None = None
     longitude: float | None = None
 
@@ -79,9 +87,11 @@ def handle_message(msg: IncomingMessage) -> list[str]:
     if session.state == "report_ask_action":
         return _handle_report_action(session, text)
     if session.state == "report_ask_photo":
-        return _handle_report_photo(session, text, msg.media_path)
+        return _handle_report_photo(session, text, msg.media_path, msg.media_content_type)
     if session.state == "report_ask_location":
         return _handle_report_location(session, text, msg.latitude, msg.longitude)
+    if session.state == "escalation_select":
+        return _handle_escalation_select(session, text)
 
     session.state = "language_select"
     return _handle_language_select(session, text)
@@ -90,10 +100,10 @@ def handle_message(msg: IncomingMessage) -> list[str]:
 def _handle_language_select(session: Session, text: str) -> list[str]:
     lang = _LANG_CHOICES.get(text)
     if lang is None:
-        return [t("en", "select_language_prompt")]
+        return [t("sw", "select_language_prompt")]
     session.lang = lang
     session.state = "main_menu"
-    return [t(lang, "language_set_confirmation"), t(lang, "main_menu")]
+    return [t(lang, "language_set_confirmation"), t(lang, "privacy_notice"), t(lang, "main_menu")]
 
 
 def _handle_main_menu(session: Session, text: str) -> list[str]:
@@ -106,7 +116,7 @@ def _handle_main_menu(session: Session, text: str) -> list[str]:
         return [t(lang, "ask_ward")]
     if text == "3":
         session.state = "language_select"
-        return [t("en", "select_language_prompt")]
+        return [t("sw", "select_language_prompt")]
     return [t(lang, "invalid_choice"), t(lang, "main_menu")]
 
 
@@ -159,11 +169,19 @@ def _handle_browse_list(session: Session, text: str) -> list[str]:
     session.project_id = project_id
     session.state = "project_detail"
 
-    from .translation import render_project_statement
+    from .translation import format_date, render_project_statement
 
     project = Project.query.get(project_id)
     statement = render_project_statement(project.to_dict(), lang)
-    return [statement, t(lang, "ask_report_action")]
+    messages = [
+        statement,
+        t(lang, "project_last_updated", date=format_date(project.last_updated_at())),
+        t(lang, "project_source", source_reference=project.source_reference or project.source_document),
+    ]
+    if project.verification_status == "disputed":
+        messages.append(t(lang, "escalation_available_notice"))
+    messages.append(t(lang, "ask_report_action"))
+    return messages
 
 
 def _handle_project_detail(session: Session, text: str) -> list[str]:
@@ -172,6 +190,9 @@ def _handle_project_detail(session: Session, text: str) -> list[str]:
 
 def _handle_report_action(session: Session, text: str) -> list[str]:
     lang = session.lang
+    if text.strip().upper() == "E":
+        session.state = "escalation_select"
+        return [render_escalation_menu(lang)]
     if text == "4":
         session.state = "main_menu"
         return [t(lang, "main_menu")]
@@ -180,17 +201,44 @@ def _handle_report_action(session: Session, text: str) -> list[str]:
         return [t(lang, "ask_report_action")]
     session.claim = claim
     session.state = "report_ask_photo"
-    return [t(lang, "ask_photo_optional")]
+    return [t(lang, "ask_photo_or_voice_optional")]
 
 
-def _handle_report_photo(session: Session, text: str, media_path: str | None) -> list[str]:
+def _handle_report_photo(session: Session, text: str, media_path: str | None, media_content_type: str | None) -> list[str]:
     lang = session.lang
-    if media_path:
+    if media_path and (media_content_type or "").startswith("audio/"):
+        # Accessibility (Section 2): a voice note is an alternative INPUT
+        # method, not a different report field — it's transcribed into the
+        # same free-text remarks a typed message would produce, same as the
+        # app's VoiceInputButton feeding ReportScreen's remarks box.
+        stt = get_stt_client(current_app.config_class)
+        transcript = stt.transcribe(media_path, lang)
+        session.remarks = transcript or None
+    elif media_path:
         session.photo_path = media_path
     elif text.strip().upper() != "SKIP":
-        return [t(lang, "ask_photo_optional")]
+        return [t(lang, "ask_photo_or_voice_optional")]
     session.state = "report_ask_location"
     return [t(lang, "ask_location_optional")]
+
+
+def _handle_escalation_select(session: Session, text: str) -> list[str]:
+    lang = session.lang
+    situation = situation_from_choice(text.strip())
+    if situation is None or not session.project_id:
+        session.state = "main_menu"
+        return [t(lang, "main_menu")]
+
+    project = Project.query.get(session.project_id)
+    response = render_escalation_response(
+        lang, situation,
+        project_name=project.display_name(lang) if project else session.project_id,
+        ward=project.ward if project else "",
+        project_id=session.project_id,
+        report_id=latest_active_report_id(session.phone, session.project_id),
+    )
+    session.state = "main_menu"
+    return [response, t(lang, "main_menu")]
 
 
 def _handle_report_location(session: Session, text: str, lat: float | None, lon: float | None) -> list[str]:
@@ -207,6 +255,7 @@ def _handle_report_location(session: Session, text: str, lat: float | None, lon:
             photo_path=session.photo_path,
             gps_lat=lat,
             gps_lon=lon,
+            remarks=session.remarks,
         )
     except UnknownProjectError:
         session.state = "main_menu"
@@ -218,11 +267,19 @@ def _handle_report_location(session: Session, text: str, lat: float | None, lon:
     if result.status_changed and result.new_status == "disputed":
         messages.append(
             t(lang, "status_changed_disputed_notice", project_name=result.project.display_name(lang),
-              threshold=Config.DISPUTE_THRESHOLD_COUNT)
+              threshold=current_app.config_class.DISPUTE_THRESHOLD_COUNT)
         )
+        messages.append(t(lang, "escalation_available_notice"))
+        session.claim = None
+        session.photo_path = None
+        session.remarks = None
+        session.state = "escalation_select"
+        messages.append(render_escalation_menu(lang))
+        return messages
 
     session.state = "main_menu"
     session.claim = None
     session.photo_path = None
+    session.remarks = None
     messages.append(t(lang, "main_menu"))
     return messages

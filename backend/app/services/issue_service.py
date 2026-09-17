@@ -12,10 +12,14 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 
+from flask import current_app
+
 from ..config import Config
 from ..db import db
 from ..models import IssueReport, Reporter, ISSUE_CATEGORIES
 from .ledger import get_ledger_client
+from .notifications import notify_county_of_issue
+from .privacy import round_gps
 from .report_service import get_or_create_reporter
 
 
@@ -58,6 +62,8 @@ def submit_issue(
     if recent_count >= Config.BURST_MAX_REPORTS:
         raise RateLimitedError()
 
+    gps_lat, gps_lon = round_gps(gps_lat, gps_lon)
+
     issue = IssueReport(
         reporter_id=reporter.id,
         county=county,
@@ -73,7 +79,7 @@ def submit_issue(
     db.session.add(issue)
     db.session.flush()
 
-    ledger = get_ledger_client(Config)
+    ledger = get_ledger_client(current_app.config_class)
     payload = {
         "issue_id": issue.id,
         "reporter_id": reporter.id,
@@ -87,4 +93,9 @@ def submit_issue(
     issue.ledger_ref = receipt.ledger_ref
 
     db.session.commit()
+
+    # Best-effort county email notification — see notify_county_of_issue's
+    # docstring: the issue is already durably saved by this point.
+    notify_county_of_issue(issue, reporter)
+
     return issue

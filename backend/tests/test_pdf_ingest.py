@@ -44,6 +44,11 @@ def test_parse_real_pdf_produces_expected_shape():
         assert r.financial_year in {"2022/23", "2023/24", "2024/25", "2025/26"}
         assert r.county_claimed_status in {"delivered", "ongoing", "not_started", "planned"}
         assert "�" not in r.description  # font-encoding artifact must be repaired
+        # Traceability (gap-fill Section 1): every record must cite the
+        # specific table/section it was lifted from, not just the document.
+        assert r.source_reference
+        assert str(r.source_page) in r.source_reference
+        assert "Kasikeu" in r.source_reference
 
     ids = [r.id for r in records]
     assert len(ids) == len(set(ids)), "project ids must be unique"

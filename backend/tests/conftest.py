@@ -9,6 +9,7 @@ from app import create_app
 from app.config import Config
 from app.db import db as _db
 from app.services.channels import reset_channel_clients
+from app.services.email_client import reset_email_client
 from app.services.ledger import reset_ledger_client
 from app.services.whatsapp_bot import reset_sessions
 
@@ -18,6 +19,12 @@ class TestConfig(Config):
     LEDGER_BACKEND = "stub"
     WHATSAPP_BACKEND = "dummy"
     SMS_BACKEND = "dummy"
+    STT_BACKEND = "dummy"
+    EMAIL_BACKEND = "dummy"
+    # Pinned rather than inherited from Config, so the test suite is
+    # hermetic regardless of what a developer's real backend/.env sets —
+    # the whole point of TestConfig existing.
+    COUNTY_NOTIFICATION_EMAIL = "josephbill00@gmail.com"
 
 
 @pytest.fixture()
@@ -31,6 +38,7 @@ def app(tmp_path):
 
     reset_ledger_client()
     reset_channel_clients()
+    reset_email_client()
     reset_sessions()
 
 

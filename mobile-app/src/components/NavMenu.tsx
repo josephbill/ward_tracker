@@ -32,7 +32,7 @@ const DESTINATIONS: Destination[] = [
  */
 export default function MenuButton({ navigation }: { navigation: any }) {
   const { lang } = useAppState();
-  const l = lang || "en";
+  const l = lang || "sw";
   const [open, setOpen] = useState(false);
 
   const go = (route: string) => {
@@ -42,7 +42,13 @@ export default function MenuButton({ navigation }: { navigation: any }) {
 
   return (
     <>
-      <Pressable style={styles.trigger} onPress={() => setOpen(true)} hitSlop={10}>
+      <Pressable
+        style={styles.trigger}
+        onPress={() => setOpen(true)}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel={t(l, "navigationMenu")}
+      >
         <Text style={styles.triggerText}>☰</Text>
       </Pressable>
 
@@ -51,12 +57,18 @@ export default function MenuButton({ navigation }: { navigation: any }) {
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>{t(l, "navigationMenu")}</Text>
             {DESTINATIONS.map((d) => (
-              <Pressable key={d.route} style={styles.item} onPress={() => go(d.route)}>
+              <Pressable
+                key={d.route}
+                style={styles.item}
+                onPress={() => go(d.route)}
+                accessibilityRole="button"
+                accessibilityLabel={t(l, d.labelKey)}
+              >
                 <Text style={styles.itemIcon}>{d.icon}</Text>
                 <Text style={styles.itemLabel}>{t(l, d.labelKey)}</Text>
               </Pressable>
             ))}
-            <Pressable style={styles.closeButton} onPress={() => setOpen(false)}>
+            <Pressable style={styles.closeButton} onPress={() => setOpen(false)} accessibilityRole="button" accessibilityLabel={t(l, "cancel")}>
               <Text style={styles.closeButtonText}>{t(l, "cancel")}</Text>
             </Pressable>
           </Pressable>

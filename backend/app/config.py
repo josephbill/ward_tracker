@@ -6,8 +6,16 @@ it can be tuned without touching logic code.
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
+
+# Every backend/.env.example value is documented as "copy to .env and fill
+# in what you have" — that only actually works if something loads the file.
+# Real env vars (e.g. ones a PaaS like Pxxl sets directly) always win;
+# load_dotenv() never overwrites a key that's already set.
+load_dotenv(BACKEND_ROOT / ".env")
 
 
 class Config:
@@ -23,8 +31,13 @@ class Config:
     PHOTO_UPLOAD_DIR = BACKEND_ROOT / "instance" / "uploads"
 
     # --- Languages ---
-    SUPPORTED_LANGUAGES = ["en", "sw", "kam"]
-    DEFAULT_LANGUAGE = "en"
+    # Kiswahili is the primary/default language (most residents' shared
+    # language across this pilot's counties); English remains fully
+    # supported as a translation choice, and is also the fallback used when
+    # a specific string has no Kiswahili/Kikamba translation yet (see
+    # services/translation.py's t()).
+    SUPPORTED_LANGUAGES = ["sw", "en", "kam"]
+    DEFAULT_LANGUAGE = "sw"
 
     # --- Dispute aggregation (Section 5) ---
     # Status flips to "Disputed" once this many INDEPENDENT reports disagree
@@ -78,3 +91,17 @@ class Config:
     STT_BACKEND = os.environ.get("STT_BACKEND", "dummy")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
     VOICE_UPLOAD_DIR = BACKEND_ROOT / "instance" / "voice_uploads"
+
+    # --- Email notifications (SendByte) ---
+    # "dummy" (default, logs instead of sending — no credentials needed) or
+    # "sendbyte" once SENDBYTE_API_KEY is set (sandbox keys start sk_test_,
+    # see https://docs.sendbyte.africa/). Fires on every report/issue
+    # submission as a best-effort side notification to the county's contact
+    # address — see services/notifications.py.
+    EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "dummy")
+    SENDBYTE_API_KEY = os.environ.get("SENDBYTE_API_KEY", "")
+    SENDBYTE_FROM_ADDRESS = os.environ.get("SENDBYTE_FROM_ADDRESS", "reports@wardtracker.ng")
+    # Real deployment would look up each county's own contact address; this
+    # pilot only ever seeds one county, so every notification goes to one
+    # configured test address.
+    COUNTY_NOTIFICATION_EMAIL = os.environ.get("COUNTY_NOTIFICATION_EMAIL", "josephbill00@gmail.com")

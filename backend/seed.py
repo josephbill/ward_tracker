@@ -47,6 +47,7 @@ def seed() -> None:
             project.county_remarks = r["county_remarks"]
             project.source_document = r["source_document"]
             project.source_page = r["source_page"]
+            project.source_reference = r.get("source_reference", "")
             if not project.verification_status:
                 project.verification_status = "reported"
 

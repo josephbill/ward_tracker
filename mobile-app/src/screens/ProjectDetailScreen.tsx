@@ -2,18 +2,20 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { useAppState } from "../state/AppContext";
 import { t } from "../i18n/i18n";
-import { fetchProject, Project } from "../api/client";
+import { fetchProject, fetchMyReports, Project } from "../api/client";
 import ListenButton from "../components/ListenButton";
 import { trackEvent } from "../services/analytics";
+import EscalationPanel from "../components/EscalationPanel";
 
 export default function ProjectDetailScreen({ route, navigation }: any) {
   const { projectId } = route.params;
-  const { lang } = useAppState();
+  const { lang, phone, phoneVerified } = useAppState();
   const [project, setProject] = useState<(Project & { reports: any[] }) | null>(null);
   const [loading, setLoading] = useState(true);
+  const [myReportId, setMyReportId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProject(projectId, lang || "en")
+    fetchProject(projectId, lang || "sw")
       .then((p) => {
         setProject(p);
         trackEvent("project_viewed", { project_id: projectId, ward: p.ward });
@@ -22,7 +24,20 @@ export default function ProjectDetailScreen({ route, navigation }: any) {
       .finally(() => setLoading(false));
   }, [projectId, lang]);
 
-  const l = lang || "en";
+  useEffect(() => {
+    // Pre-fills "your report ref" in the escalation panel (Section 6) when
+    // the resident already has one for this project — best-effort, never
+    // blocks rendering the rest of the screen if it fails or is skipped.
+    if (!phoneVerified || !phone) return;
+    fetchMyReports(phone, lang || "sw")
+      .then((res) => {
+        const mine = res.reports.find((r) => r.project_id === projectId && r.active);
+        if (mine) setMyReportId(mine.id);
+      })
+      .catch(() => {});
+  }, [projectId, phone, phoneVerified, lang]);
+
+  const l = lang || "sw";
 
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
   if (!project) return <Text style={styles.empty}>{t(l, "projectLoadError")}</Text>;
@@ -43,18 +58,40 @@ export default function ProjectDetailScreen({ route, navigation }: any) {
         />
       </View>
 
-      <Pressable style={styles.primaryButton} onPress={() => navigation.navigate("Report", { projectId: project.id, projectName: project.project_name })}>
+      {project.verification_status === "disputed" && (
+        <EscalationPanel
+          lang={l as any}
+          projectName={project.project_name}
+          projectId={project.id}
+          reportId={myReportId}
+        />
+      )}
+
+      <Pressable
+        style={styles.primaryButton}
+        onPress={() => navigation.navigate("Report", { projectId: project.id, projectName: project.project_name })}
+        accessibilityRole="button"
+        accessibilityLabel={t(l, "reportOnThisProject")}
+      >
         <Text style={styles.primaryButtonText}>{t(l, "reportOnThisProject")}</Text>
       </Pressable>
 
-      <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate("AuditTrail", { projectId: project.id })}>
+      <Pressable
+        style={styles.secondaryButton}
+        onPress={() => navigation.navigate("AuditTrail", { projectId: project.id })}
+        accessibilityRole="button"
+        accessibilityLabel={t(l, "viewAuditTrail")}
+      >
         <Text style={styles.secondaryButtonText}>{t(l, "viewAuditTrail")}</Text>
       </Pressable>
 
       <Text style={styles.whatsappHint}>{t(l, "whatsappHint", { projectId: project.id })}</Text>
 
       <Text style={styles.sourceNote}>
-        {t(l, "sourceLabel")}: {project.source_document}, {t(l, "pageAbbrev")} {project.source_page}
+        {t(l, "lastUpdatedLabel")}: {project.last_updated_at ? new Date(project.last_updated_at).toLocaleDateString() : "—"}
+      </Text>
+      <Text style={styles.sourceNote}>
+        {t(l, "sourceReferenceLabel")}: {project.source_reference || `${project.source_document}, ${t(l, "pageAbbrev")} ${project.source_page}`}
       </Text>
     </ScrollView>
   );

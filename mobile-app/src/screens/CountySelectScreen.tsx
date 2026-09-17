@@ -8,7 +8,7 @@ import { trackEvent } from "../services/analytics";
 
 export default function CountySelectScreen({ navigation }: any) {
   const { lang, setCounty } = useAppState();
-  const l = lang || "en";
+  const l = lang || "sw";
   const [options, setOptions] = useState<SelectOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

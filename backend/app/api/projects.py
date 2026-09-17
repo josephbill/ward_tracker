@@ -1,6 +1,5 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
-from ..config import Config
 from ..db import db
 from ..models import Project
 from ..services.translation import render_project_statement, supported_languages
@@ -9,13 +8,15 @@ projects_bp = Blueprint("projects", __name__)
 
 
 def _lang_from_request() -> str:
-    lang = request.args.get("lang", Config.DEFAULT_LANGUAGE)
-    return lang if lang in Config.SUPPORTED_LANGUAGES else Config.DEFAULT_LANGUAGE
+    config = current_app.config_class
+    lang = request.args.get("lang", config.DEFAULT_LANGUAGE)
+    return lang if lang in config.SUPPORTED_LANGUAGES else config.DEFAULT_LANGUAGE
 
 
 @projects_bp.get("/languages")
 def list_languages():
-    return jsonify({"supported": supported_languages(), "default": Config.DEFAULT_LANGUAGE})
+    config = current_app.config_class
+    return jsonify({"supported": supported_languages(), "default": config.DEFAULT_LANGUAGE})
 
 
 @projects_bp.get("/counties")

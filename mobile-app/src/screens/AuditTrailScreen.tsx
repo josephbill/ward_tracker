@@ -7,7 +7,7 @@ import { fetchAuditTrail } from "../api/client";
 export default function AuditTrailScreen({ route }: any) {
   const { projectId } = route.params;
   const { lang } = useAppState();
-  const l = lang || "en";
+  const l = lang || "sw";
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

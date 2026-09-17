@@ -9,7 +9,7 @@ import { onSyncComplete, syncNow } from "../offline/syncManager";
 
 export default function WardProjectsScreen({ navigation }: any) {
   const { lang, county, ward } = useAppState();
-  const l = lang || "en";
+  const l = lang || "sw";
   const [projects, setProjects] = useState<Project[]>([]);
   const [deliveredCount, setDeliveredCount] = useState(0);
   const [completionRate, setCompletionRate] = useState(0);
@@ -69,16 +69,16 @@ export default function WardProjectsScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.menuRow}>
-        <Pressable style={styles.menuButton} onPress={() => navigation.navigate("MyReports")}>
+        <Pressable style={styles.menuButton} onPress={() => navigation.navigate("MyReports")} accessibilityRole="button" accessibilityLabel={t(l, "myReports")}>
           <Text style={styles.menuButtonText}>{t(l, "myReports")}</Text>
         </Pressable>
-        <Pressable style={styles.menuButton} onPress={() => navigation.navigate("IssuesList")}>
+        <Pressable style={styles.menuButton} onPress={() => navigation.navigate("IssuesList")} accessibilityRole="button" accessibilityLabel={t(l, "localIssues")}>
           <Text style={styles.menuButtonText}>{t(l, "localIssues")}</Text>
         </Pressable>
-        <Pressable style={styles.menuButton} onPress={() => navigation.navigate("WardSelect")}>
+        <Pressable style={styles.menuButton} onPress={() => navigation.navigate("WardSelect")} accessibilityRole="button" accessibilityLabel={t(l, "changeWard")}>
           <Text style={styles.menuButtonText}>{t(l, "changeWard")}</Text>
         </Pressable>
-        <Pressable style={styles.menuButton} onPress={() => navigation.navigate("LanguageSelect")}>
+        <Pressable style={styles.menuButton} onPress={() => navigation.navigate("LanguageSelect")} accessibilityRole="button" accessibilityLabel={t(l, "changeLanguage")}>
           <Text style={styles.menuButtonText}>{t(l, "changeLanguage")}</Text>
         </Pressable>
       </View>
@@ -121,7 +121,12 @@ export default function WardProjectsScreen({ navigation }: any) {
           keyExtractor={(p) => p.id}
           contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={({ item }) => (
-            <Pressable style={styles.card} onPress={() => navigation.navigate("ProjectDetail", { projectId: item.id })}>
+            <Pressable
+              style={styles.card}
+              onPress={() => navigation.navigate("ProjectDetail", { projectId: item.id })}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.project_name}, ${t(l, `verificationStatus_${item.verification_status}`)}`}
+            >
               <Text style={styles.cardTitle}>{item.project_name}</Text>
               <Text style={styles.cardMeta}>{item.financial_year} · Ksh {item.allocated_amount_ksh.toLocaleString()}</Text>
               <Text style={styles.cardStatus}>{t(l, `verificationStatus_${item.verification_status}`)}</Text>
@@ -136,7 +141,7 @@ export default function WardProjectsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 16 },
   menuRow: { flexDirection: "row", gap: 8, marginBottom: 12, flexWrap: "wrap" },
-  menuButton: { borderWidth: 1, borderColor: "#0b6e4f", borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10 },
+  menuButton: { borderWidth: 1, borderColor: "#0b6e4f", borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, minHeight: 44, justifyContent: "center" },
   menuButtonText: { color: "#0b6e4f", fontSize: 12, fontWeight: "600" },
   wardHeading: { fontSize: 20, fontWeight: "700", marginBottom: 10 },
   offlineBanner: { backgroundColor: "#fff3cd", padding: 10, borderRadius: 8, marginBottom: 8 },

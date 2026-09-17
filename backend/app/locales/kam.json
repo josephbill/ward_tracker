@@ -29,8 +29,8 @@
   "verification_status_not_delivered": "Andũ maneenaa ndwaĩthilwa",
   "verification_status_disputed": "Mĩvano - andũ ma wadi mailyũlanĩte na ĩvangũ ya kaunti",
 
-  "ask_report_action": "Ĩĩ, mradi ũũ nĩwaĩthilwa?\n1. Ĩĩ, nĩwaĩthilwa - nĩnyĩthĩĩtye\n2. Aa, ndwaĩthilwa\n3. Nĩwaĩthilwa kĩnini\n4. Yeka",
-  "ask_photo_optional": "No ũtũme veni ya mradi yĩĩ ĩvinda, kana wĩtĩkĩle SKIP kũendeea ũtena veni.",
+  "ask_report_action": "Ĩĩ, mradi ũũ nĩwaĩthilwa?\n1. Ĩĩ, nĩwaĩthilwa - nĩnyĩthĩĩtye\n2. Aa, ndwaĩthilwa\n3. Nĩwaĩthilwa kĩnini\n4. Yeka\nĨtĩkĩla E ĩvinda yonthe kwona ũndũ wa kwĩka ĩlĩ mradi wĩ mĩvano-nĩ.",
+  "ask_photo_or_voice_optional": "No ũtũme veni kana ũneeni wa sauti wa ũndũ wonete, kana wĩtĩkĩle SKIP kũendeea ũtena kĩndũ. Veni ndĩendekaa kũtũma ũneeni.",
   "ask_location_optional": "Nĩtũvoya woonanie vala wĩ ethiwa nĩwĩtonya, kana wĩtĩkĩle SKIP.",
   "report_received": "Nĩtwakwataa. Ũneeni waku wa {project_name} nĩwaandĩkwa na kũĩkwa mbandĩko-nĩ ĩte ĩngĩalyũlwa. Nambari: {ledger_ref}.",
   "report_updated": "Nĩtwakwataa - ũneeni waku wa mbee wa mradi ũũ nĩwaalyũlwa.",
@@ -64,5 +64,19 @@
 
   "claim_label_confirmed_delivered": "nĩnyĩthĩĩtye nĩwaĩthilwa",
   "claim_label_not_delivered": "ndwaĩthilwa",
-  "claim_label_partially_delivered": "nĩwaĩthilwa kĩnini"
+  "claim_label_partially_delivered": "nĩwaĩthilwa kĩnini",
+
+  "privacy_notice": "Maneeni maku maĩkĩtye ũthĩnĩ wa ĩsyĩtwa ĩtesĩ manyĩkaa, ti ĩsyĩtwa yaku. Ũmanyi wa handũ/kĩlũngu nĩweumagya veni-nĩ na GPS yaku ĩĩkagwa o na ũsao wa wadi. Sisya Sheria ya Kenya ya Ũvitĩo wa Data 2019 na Ofisi ya Kamishina wa Ũvitĩo wa Data (ODPC, odpc.go.ke) kwa mavinya maku ũndũ wa data ĩsu.",
+
+  "project_last_updated": "Ĩlĩ yaalyũlwa: {date}",
+  "project_source": "Kuma: {source_reference}",
+
+  "escalation_available_notice": "Mradi ũũ wĩ mĩvano-nĩ. Ĩtĩkĩla E kwona ũndũ wa kwĩka ĩlĩ.",
+  "escalation_menu_header": "Nĩyĩva yĩtaĩlana na ũndũ ũneenaa?",
+  "escalation_situation_no_response": "Vaĩ mũndũ waneenete ũndũ wa mradi ũũ",
+  "escalation_situation_financial_accountability": "Mbesa nĩyatetee ĩndĩ wĩa ndwathũkũmwa",
+  "escalation_situation_corruption": "Nĩngwĩkĩlaa mĩlomo (mbesa kũalyũlwa, valyũ kũongelwa, mũthũkũmi wa v'ĩ)",
+  "escalation_situation_maladministration": "Ũndũ wa kũthũkũmwa vyũ (ti mĩlomo)",
+  "escalation_no_report_yet": "vaĩ vitũ — tavya nambari ya mradi yĩ vaita ĩvinda wĩanĩanĩsya nao",
+  "escalation_response": "{situation_label}\nWĩanĩanĩsya na: {institution}\n{detail}\n\nWaanĩanĩsya, tavya: {project_name} ({project_id}). Nambari ya ũneeni waku: {report_id}."
 }

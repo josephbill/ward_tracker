@@ -16,7 +16,7 @@ export default function PhoneVerifyScreen({ navigation, route }: any) {
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [busy, setBusy] = useState(false);
-  const l = lang || "en";
+  const l = lang || "sw";
 
   const onRequestCode = async () => {
     if (!phone.trim()) return;

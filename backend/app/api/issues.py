@@ -1,6 +1,5 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
-from ..config import Config
 from ..models import IssueReport, ISSUE_CATEGORIES
 from ..services.issue_service import (
     InvalidCategoryError,
@@ -51,7 +50,7 @@ def create_issue():
         description = form.get("description")
         gps_lat = form.get("gps_lat", type=float)
         gps_lon = form.get("gps_lon", type=float)
-        photo_path = save_photo(request.files.get("photo"), Config.PHOTO_UPLOAD_DIR)
+        photo_path = save_photo(request.files.get("photo"), current_app.config_class.PHOTO_UPLOAD_DIR)
     else:
         data = request.get_json(force=True) or {}
         raw_phone = data.get("phone")

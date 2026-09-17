@@ -29,8 +29,10 @@ function getClient() {
     );
   }
 
+  const key = PrivateKey.fromString(operatorKey);
+console.log("Derived public key:", key.publicKey.toString());
   const client = network === "mainnet" ? Client.forMainnet() : Client.forTestnet();
-  client.setOperator(operatorId, PrivateKey.fromStringECDSA(operatorKey));
+  client.setOperator(operatorId, PrivateKey.fromString(operatorKey));
   return client;
 }
 

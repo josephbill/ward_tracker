@@ -24,7 +24,7 @@ const CATEGORIES: IssueCategory[] = ["roads", "water", "health", "education", "e
  */
 export default function ReportIssueScreen({ navigation }: any) {
   const { lang, county, ward, phone, phoneVerified } = useAppState();
-  const l = lang || "en";
+  const l = lang || "sw";
 
   const [category, setCategory] = useState<IssueCategory | null>(null);
   const [title, setTitle] = useState("");
@@ -96,6 +96,9 @@ export default function ReportIssueScreen({ navigation }: any) {
             key={cat}
             style={[styles.categoryChip, category === cat && styles.categoryChipSelected]}
             onPress={() => setCategory(cat)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: category === cat }}
+            accessibilityLabel={t(l, `issueCategory_${cat}`)}
           >
             <Text style={[styles.categoryChipText, category === cat && styles.categoryChipTextSelected]}>
               {t(l, `issueCategory_${cat}`)}
@@ -123,17 +126,17 @@ export default function ReportIssueScreen({ navigation }: any) {
 
       <Text style={styles.sectionLabel}>{t(l, "addPhotoOptional")}</Text>
       <View style={styles.row}>
-        <Pressable style={styles.smallButton} onPress={() => pickPhoto(true)}>
+        <Pressable style={styles.smallButton} onPress={() => pickPhoto(true)} accessibilityRole="button" accessibilityLabel={t(l, "takePhoto")}>
           <Text style={styles.smallButtonText}>{t(l, "takePhoto")}</Text>
         </Pressable>
-        <Pressable style={styles.smallButton} onPress={() => pickPhoto(false)}>
+        <Pressable style={styles.smallButton} onPress={() => pickPhoto(false)} accessibilityRole="button" accessibilityLabel={t(l, "choosePhoto")}>
           <Text style={styles.smallButtonText}>{t(l, "choosePhoto")}</Text>
         </Pressable>
       </View>
-      {photoUri && <Image source={{ uri: photoUri }} style={styles.photoPreview} />}
+      {photoUri && <Image source={{ uri: photoUri }} style={styles.photoPreview} accessibilityLabel={t(l, "addPhotoOptional")} />}
 
       <Text style={styles.sectionLabel}>{t(l, "shareLocationOptional")}</Text>
-      <Pressable style={styles.smallButton} onPress={shareLocation}>
+      <Pressable style={styles.smallButton} onPress={shareLocation} accessibilityRole="button" accessibilityLabel={t(l, "shareLocationOptional")}>
         <Text style={styles.smallButtonText}>{location ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : t(l, "shareLocationOptional")}</Text>
       </Pressable>
 
@@ -141,6 +144,9 @@ export default function ReportIssueScreen({ navigation }: any) {
         style={[styles.submitButton, (!category || !title.trim() || submitting) && styles.submitButtonDisabled]}
         onPress={submit}
         disabled={!category || !title.trim() || submitting}
+        accessibilityRole="button"
+        accessibilityLabel={t(l, "submitIssue")}
+        accessibilityState={{ disabled: !category || !title.trim() || submitting }}
       >
         {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>{t(l, "submitIssue")}</Text>}
       </Pressable>
@@ -154,14 +160,14 @@ const styles = StyleSheet.create({
   explainer: { fontSize: 13, color: "#666", marginBottom: 14 },
   sectionLabel: { fontSize: 13, color: "#555", marginTop: 18, marginBottom: 6 },
   categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  categoryChip: { borderWidth: 1, borderColor: "#ccc", borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
+  categoryChip: { borderWidth: 1, borderColor: "#ccc", borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, minHeight: 44, justifyContent: "center" },
   categoryChipSelected: { borderColor: "#0b6e4f", backgroundColor: "#e6f4ef" },
   categoryChipText: { fontSize: 13 },
   categoryChipTextSelected: { color: "#0b6e4f", fontWeight: "700" },
   input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10, fontSize: 14 },
   remarksInput: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10, fontSize: 14, minHeight: 70, textAlignVertical: "top", marginBottom: 8 },
   row: { flexDirection: "row", gap: 8 },
-  smallButton: { borderWidth: 1, borderColor: "#0b6e4f", borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14 },
+  smallButton: { borderWidth: 1, borderColor: "#0b6e4f", borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14, minHeight: 44, justifyContent: "center" },
   smallButtonText: { color: "#0b6e4f", fontWeight: "600", fontSize: 13 },
   photoPreview: { width: 100, height: 100, borderRadius: 8, marginTop: 10 },
   submitButton: { backgroundColor: "#0b6e4f", padding: 16, borderRadius: 10, marginTop: 28, marginBottom: 24 },

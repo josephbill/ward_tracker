@@ -11,12 +11,15 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from ..config import Config
+from flask import current_app
+
 from ..db import db
 from ..models import Project, Report, Reporter, StatusEvent
 from .aggregation import recompute_verification_status
 from .ledger import get_ledger_client
 from .ledger.base import compute_payload_hash
+from .notifications import notify_county_of_report
+from .privacy import round_gps
 from .spam_defense import check_report_gate, hash_phone, update_reputation
 
 _STATUS_TO_CLAIM = {
@@ -51,6 +54,25 @@ def get_or_create_reporter(raw_phone: str) -> Reporter:
     return reporter
 
 
+def latest_active_report_id(raw_phone: str, project_id: str) -> str | None:
+    """A resident's own most recent active report on one project, if any —
+    used to pre-fill "your report ref" in the escalation ("what you can do
+    next") flow so they're not starting from scratch re-explaining what they
+    saw. Looks up by phone_hash only; never creates a Reporter row just for
+    this lookup, since someone merely browsing/escalating shouldn't gain a
+    Reporter record."""
+    phone_hash = hash_phone(raw_phone)
+    reporter = Reporter.query.filter_by(phone_hash=phone_hash).first()
+    if reporter is None:
+        return None
+    report = (
+        Report.query.filter_by(reporter_id=reporter.id, project_id=project_id, active=True)
+        .order_by(Report.submitted_at.desc())
+        .first()
+    )
+    return report.id if report else None
+
+
 def submit_report(
     *,
     project_id: str,
@@ -68,6 +90,7 @@ def submit_report(
 
     reporter = get_or_create_reporter(raw_phone)
     gate = check_report_gate(reporter, project_id)
+    gps_lat, gps_lon = round_gps(gps_lat, gps_lon)
 
     if gate.supersede_report_id:
         old = Report.query.get(gate.supersede_report_id)
@@ -89,7 +112,7 @@ def submit_report(
     db.session.add(report)
     db.session.flush()
 
-    ledger = get_ledger_client(Config)
+    ledger = get_ledger_client(current_app.config_class)
     submission_payload = {
         "report_id": report.id,
         "project_id": project_id,
@@ -142,6 +165,12 @@ def submit_report(
         )
 
     db.session.commit()
+
+    # Best-effort county email notification — added after the fact,
+    # deliberately last and deliberately unable to affect anything above:
+    # the report is already durably saved by the time this runs, and
+    # notify_county_of_report() swallows its own exceptions.
+    notify_county_of_report(report, project, reporter)
 
     return SubmitReportResult(
         report=report,

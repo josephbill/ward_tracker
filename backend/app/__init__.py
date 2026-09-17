@@ -8,6 +8,14 @@ from .db import db
 def create_app(config_object: type = Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_object)
+    # Flask's app.config is a dict copy of config_object's attributes — the
+    # get_*_client() factories (ledger, WhatsApp, SMS, STT, email) all read
+    # attribute-style config (config.EMAIL_BACKEND, not config["EMAIL_BACKEND"]),
+    # so every call site needs the ORIGINAL class, not a re-import of the
+    # plain Config. Stashing it here is what lets tests' TestConfig actually
+    # override backend behavior instead of every client silently reading the
+    # real process-wide Config class regardless of what was passed in here.
+    app.config_class = config_object
 
     # The React Native app's Expo web preview runs on its own dev-server
     # origin (e.g. :19100) and calls this API (e.g. :5055) cross-origin.

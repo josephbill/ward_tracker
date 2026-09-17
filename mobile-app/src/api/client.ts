@@ -27,6 +27,8 @@ export interface Project {
   county_remarks: string;
   source_document: string;
   source_page: number;
+  source_reference: string;
+  last_updated_at: string | null;
   verification_status: VerificationStatus;
   statement: string;
 }

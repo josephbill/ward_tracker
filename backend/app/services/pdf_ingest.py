@@ -33,6 +33,17 @@ WARD = "Kasikeu"
 COUNTY = "Makueni"
 SOURCE_DOCUMENT = "Kasikeu Ward Development Profile, 2025 (Government of Makueni County)"
 
+# Every field on ProjectRecord below (ward, project name, allocated amount,
+# financial year, sector, source reference, ...) is generic county-budget
+# vocabulary, not specific to Makueni's document layout — see the module
+# docstring. A different county's PDF needs its own parser (this file's
+# table-position constants and column layout are tied to THIS document), but
+# it only needs to produce ProjectRecord-shaped rows; nothing downstream
+# (models.py, translation.py, aggregation.py, the WhatsApp/SMS bots, the
+# ledger) knows or cares which parser produced them.
+HISTORICAL_SECTION_LABEL = 'Section 3 "List of Ward Development Projects"'
+PLANNED_SECTION_LABEL = 'Section 4 "List of FY2025/26 Projects"'
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_PDF_PATH = REPO_ROOT / "data" / "raw" / "Kasikeu-Ward-Development-Profile-2025.pdf"
 DEFAULT_OUTPUT_PATH = REPO_ROOT / "data" / "ward_projects.json"
@@ -71,6 +82,11 @@ class ProjectRecord:
     county_remarks: str
     source_document: str
     source_page: int
+    # The specific table/section a row was lifted from, e.g. "Kasikeu Ward
+    # Development Profile, 2025 ..., Section 3 'List of Ward Development
+    # Projects', Kasikeu Ward, p.11" — narrows source_document+source_page
+    # down to something a resident could point at and go check themselves.
+    source_reference: str = ""
     verification_status: str = "reported"  # citizen-facing status; see aggregation.py
 
 
@@ -155,6 +171,7 @@ def parse_historical_projects(pdf: "pdfplumber.PDF") -> list[ProjectRecord]:
                         county_remarks=_clean(remarks),
                         source_document=SOURCE_DOCUMENT,
                         source_page=page_index + 1,
+                        source_reference=f"{SOURCE_DOCUMENT}, {HISTORICAL_SECTION_LABEL}, {WARD} Ward, p.{page_index + 1}",
                     )
                 )
     return records
@@ -187,6 +204,7 @@ def parse_planned_projects(pdf: "pdfplumber.PDF") -> list[ProjectRecord]:
                     county_remarks="Budgeted for FY2025/26; implementation not yet due to begin.",
                     source_document=SOURCE_DOCUMENT,
                     source_page=PLANNED_TABLE_PAGE + 1,
+                    source_reference=f"{SOURCE_DOCUMENT}, {PLANNED_SECTION_LABEL}, {WARD} Ward, p.{PLANNED_TABLE_PAGE + 1}",
                 )
             )
     return records

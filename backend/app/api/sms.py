@@ -1,6 +1,5 @@
-from flask import Blueprint, request
+from flask import Blueprint, current_app, request
 
-from ..config import Config
 from ..services.channels import get_sms_client
 from ..services.sms_bot import handle_sms
 
@@ -22,7 +21,7 @@ def sms_webhook():
 
     reply_text = handle_sms(from_phone, text)
 
-    client = get_sms_client(Config)
+    client = get_sms_client(current_app.config_class)
     client.send_text(from_phone, reply_text)
 
     return {"status": "ok", "reply": reply_text}

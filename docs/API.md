@@ -25,6 +25,13 @@ in the requested language (`en` / `sw` / `kam`). Also returns
 projects the **county's own record** claims are complete (not citizen
 -verified; see each project's `verification_status` for that).
 
+Every project also carries `last_updated_at` (ISO timestamp of the most
+recent audit-trail event, or ingestion time if it has none yet — see
+`Project.last_updated_at()`) and `source_reference` (the specific
+table/section/page it was lifted from in the source document, e.g.
+`"..., Section 3 'List of Ward Development Projects', Kasikeu Ward, p.11"`
+— narrower than `source_document`/`source_page` alone).
+
 **`GET /api/projects/<project_id>?lang=en`**
 Single project detail, including its currently-active reports.
 
@@ -53,12 +60,21 @@ at read time from the event's own stored payload — see
 `claim` is one of `confirmed_delivered` / `not_delivered` / `partially_delivered`.
 `channel` is one of `app` / `whatsapp` / `sms` / `bluetooth`.
 `remarks` is optional free text — typed or voice-transcribed (see
-`POST /api/voice/transcribe` below).
+`POST /api/voice/transcribe` below). A photo is never required to submit a
+report — the claim alone is a complete, valid submission.
 Also accepts `multipart/form-data` with the same fields plus a `photo` file.
+`gps_lat`/`gps_lon` are rounded server-side to ~3 decimal places
+(~111m/neighbourhood precision — `services/privacy.py`) before being stored,
+regardless of the precision the client sent; an uploaded photo has its EXIF
+metadata stripped before storage (`services/uploads.py`).
 
 Response includes `status_changed` and `new_status` — the WhatsApp bot uses
 this to notify a reporter when their submission just pushed a project into
 `disputed`.
+
+A successful submission also fires a best-effort county notification email
+(see `services/notifications.py`) — this never affects the response above;
+an email-sending failure is logged and swallowed, not surfaced as an error.
 
 **`GET /api/reports/mine?phone=+254700000001&lang=en`**
 A resident's own report history (percent-encode the `+` — `URLSearchParams`
@@ -107,11 +123,35 @@ same way as project reports (`429` past `BURST_MAX_REPORTS` in
 `BURST_WINDOW_MINUTES`). Also accepts `multipart/form-data` with a `photo`.
 Anchored to the same ledger as project reports, but doesn't feed the
 dispute-aggregation logic — there's no official county claim to compare
-against for something the county hasn't published yet.
+against for something the county hasn't published yet. Also fires the same
+best-effort county notification email as a project report.
 
 ## Channel webhooks
 
 **`POST /webhooks/whatsapp`** — Twilio-style form fields (`From`, `Body`,
-`MediaUrl0`, `Latitude`, `Longitude`).
+`MediaUrl0`, `MediaContentType0`, `Latitude`, `Longitude`). When
+`MediaContentType0` starts with `audio/`, the media is treated as a voice
+note and transcribed via the configured STT client into the report's
+`remarks` instead of being stored as a photo (`whatsapp_bot._handle_report_photo`).
 
 **`POST /webhooks/sms`** — Africa's Talking-style form fields (`from`, `text`).
+
+## "What you can do next" (escalation)
+
+No dedicated REST endpoint — `app/services/escalation.py` is a small,
+channel-agnostic lookup table (situation → institution/contact) rendered
+through the same locale/template system as everything else, and each
+channel calls it directly:
+
+- **App**: `EscalationPanel` renders on a project's detail screen whenever
+  `verification_status === "disputed"`, mirroring the same four-situation
+  table client-side (`mobile-app/src/services/escalation.ts`).
+- **WhatsApp**: reply `E` from a project's detail view (or automatically
+  offered right after a report pushes a project into `disputed`) to get the
+  4-option menu; replying `1`-`4` returns the matching contact.
+- **SMS**: `NEXT <project_code> <1-4>`, e.g. `NEXT KASIKEU-2022-23-001 3`.
+
+All three pre-fill the project reference and, when the resident already has
+an active report on that project, their own report id
+(`report_service.latest_active_report_id`) — so escalating doesn't mean
+re-explaining what they already reported from scratch.

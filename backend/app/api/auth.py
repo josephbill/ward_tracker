@@ -1,6 +1,5 @@
 from flask import Blueprint, current_app, jsonify, request
 
-from ..config import Config
 from ..db import db
 from ..services import otp
 from ..services.channels import get_sms_client
@@ -17,7 +16,7 @@ def request_otp():
         return jsonify({"error": "phone is required"}), 400
 
     code = otp.request_otp(phone)
-    sms = get_sms_client(Config)
+    sms = get_sms_client(current_app.config_class)
     sms.send_text(phone, f"Your County Ward Tracker verification code is {code}")
     return jsonify({"status": "sent"})
 
