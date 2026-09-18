@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from .base import LedgerClient, LedgerReceipt, compute_payload_hash
 from .stub_client import StubLedgerClient
 from .hedera_sidecar_client import HederaSidecarClient
@@ -19,7 +17,13 @@ def get_ledger_client(config) -> LedgerClient:
     if config.LEDGER_BACKEND == "hedera_sidecar":
         _client = HederaSidecarClient(config.LEDGER_SIDECAR_URL)
     else:
-        log_path = Path(config.BACKEND_ROOT) / "instance" / "ledger_log.jsonl"
+        # config.INSTANCE_DIR (not a raw BACKEND_ROOT/"instance" path built
+        # here) — it's already been confirmed writable at config load time,
+        # falling back to a temp dir if the deploy filesystem is read-only.
+        # A raw path built directly from BACKEND_ROOT would bypass that
+        # fallback and crash StubLedgerClient's own mkdir with the exact
+        # same PermissionError this was written to avoid.
+        log_path = config.INSTANCE_DIR / "ledger_log.jsonl"
         _client = StubLedgerClient(log_path)
     return _client
 

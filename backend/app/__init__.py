@@ -23,8 +23,10 @@ def create_app(config_object: type = Config) -> Flask:
     # the web preview target used in local dev/demo.
     CORS(app)
 
-    config_object.BACKEND_ROOT.mkdir(parents=True, exist_ok=True)
-    (config_object.BACKEND_ROOT / "instance").mkdir(parents=True, exist_ok=True)
+    # config.py's _writable_instance_dir() already created (and confirmed
+    # writable) the base instance directory these live under — falling back
+    # to a temp dir itself if the deployed filesystem is read-only, so these
+    # two never hit that failure mode.
     config_object.PHOTO_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     config_object.VOICE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 

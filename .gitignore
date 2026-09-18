@@ -7,6 +7,7 @@ venv/
 # Backend runtime data (regenerate via seed.py / real ledger)
 backend/instance/
 backend/.env
+*.log
 
 # Node / Expo
 node_modules/
