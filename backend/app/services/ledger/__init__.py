@@ -1,4 +1,4 @@
-from .base import LedgerClient, LedgerReceipt, compute_payload_hash
+from .base import LedgerClient, LedgerReceipt, LedgerUnavailableError, compute_payload_hash
 from .stub_client import StubLedgerClient
 from .hedera_sidecar_client import HederaSidecarClient
 
@@ -15,7 +15,7 @@ def get_ledger_client(config) -> LedgerClient:
         return _client
 
     if config.LEDGER_BACKEND == "hedera_sidecar":
-        _client = HederaSidecarClient(config.LEDGER_SIDECAR_URL)
+        _client = HederaSidecarClient(config.LEDGER_SIDECAR_URL, timeout_s=config.LEDGER_SIDECAR_TIMEOUT_S)
     else:
         # config.INSTANCE_DIR (not a raw BACKEND_ROOT/"instance" path built
         # here) — it's already been confirmed writable at config load time,
@@ -37,6 +37,7 @@ def reset_ledger_client() -> None:
 __all__ = [
     "LedgerClient",
     "LedgerReceipt",
+    "LedgerUnavailableError",
     "compute_payload_hash",
     "StubLedgerClient",
     "HederaSidecarClient",

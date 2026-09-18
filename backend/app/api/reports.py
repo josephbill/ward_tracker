@@ -2,8 +2,9 @@ import json
 
 from flask import Blueprint, current_app, jsonify, request
 
+from ..db import db
 from ..models import Project, Report, Reporter, StatusEvent
-from ..services.ledger import get_ledger_client
+from ..services.ledger import LedgerUnavailableError, get_ledger_client
 from ..services.report_service import PhoneNotVerifiedError, UnknownProjectError, submit_report
 from ..services.spam_defense import hash_phone
 from ..services.translation import render_project_statement, t
@@ -65,9 +66,21 @@ def create_report():
             remarks=remarks,
         )
     except UnknownProjectError:
+        db.session.rollback()
         return jsonify({"error": "unknown_project"}), 404
     except PhoneNotVerifiedError:
+        # get_or_create_reporter() may already have flushed a brand-new
+        # Reporter row before this was raised — roll back so an unverified
+        # submission attempt never leaves that behind. Flask-SQLAlchemy does
+        # NOT do this automatically for a request that returns normally
+        # (only default rollback-on-unhandled-exception applies) — caught
+        # the hard way: a report flushed before a later error in the same
+        # request stayed persisted, ledger_ref-less, until this was added.
+        db.session.rollback()
         return jsonify({"error": "phone_not_verified"}), 403
+    except LedgerUnavailableError:
+        db.session.rollback()
+        return jsonify({"error": "ledger_unavailable"}), 503
 
     message = t(
         lang,
@@ -173,7 +186,14 @@ def audit_trail(project_id: str):
         payload = {}
         if e.ledger_ref:
             payload = json.loads(e.payload_json)
-            verified = ledger.verify(payload, e.ledger_ref)
+            try:
+                verified = ledger.verify(payload, e.ledger_ref)
+            except LedgerUnavailableError:
+                # A sidecar that's temporarily unreachable (e.g. a cold
+                # Render instance) shouldn't 500 the whole audit trail —
+                # "can't confirm right now" safely defaults to unverified
+                # rather than crashing the page.
+                verified = False
         translated_description = _render_event_description(e, payload, lang)
 
         # A "submission" event is permanent audit history even after the

@@ -18,6 +18,7 @@ export default function WardProjectsScreen({ navigation, route }: any) {
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
   const [flashMessage, setFlashMessage] = useState<string | null>(null);
+  const [flashType, setFlashType] = useState<"success" | "info" | "warning">("success");
   const [needsReverify, setNeedsReverify] = useState(false);
 
   // Report/issue submission lands here via navigate(..., { flashMessageKey })
@@ -30,7 +31,8 @@ export default function WardProjectsScreen({ navigation, route }: any) {
     const key = route?.params?.flashMessageKey;
     if (!key) return;
     setFlashMessage(key);
-    navigation.setParams({ flashMessageKey: undefined });
+    setFlashType(route?.params?.flashMessageType ?? "success");
+    navigation.setParams({ flashMessageKey: undefined, flashMessageType: undefined });
     const timer = setTimeout(() => setFlashMessage(null), 5000);
     return () => clearTimeout(timer);
   }, [route?.params?.flashMessageKey]);
@@ -114,12 +116,24 @@ export default function WardProjectsScreen({ navigation, route }: any) {
 
       {flashMessage && (
         <Pressable
-          style={styles.successBanner}
+          style={
+            flashType === "warning" ? styles.offlineBanner
+              : flashType === "info" ? styles.pendingBanner
+              : styles.successBanner
+          }
           onPress={() => setFlashMessage(null)}
           accessibilityRole="button"
           accessibilityLabel={t(l, flashMessage)}
         >
-          <Text style={styles.successBannerText}>{t(l, flashMessage)}</Text>
+          <Text
+            style={
+              flashType === "warning" ? styles.offlineBannerText
+                : flashType === "info" ? styles.pendingBannerText
+                : styles.successBannerText
+            }
+          >
+            {t(l, flashMessage)}
+          </Text>
         </Pressable>
       )}
 

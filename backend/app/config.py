@@ -112,6 +112,14 @@ class Config:
     # requires real testnet credentials there).
     LEDGER_BACKEND = os.environ.get("LEDGER_BACKEND", "stub")
     LEDGER_SIDECAR_URL = os.environ.get("LEDGER_SIDECAR_URL", "http://localhost:4001")
+    # Free-tier Render (where ledger-sidecar/ is hosted) spins the service
+    # down after 15 minutes idle; the first request after that pays a cold
+    # start of up to ~60s. 10s (a reasonable default for an already-warm
+    # sidecar) was timing out on exactly that cold start in production —
+    # confirmed live via a ReadTimeoutError. 45s comfortably covers it
+    # without leaving a genuinely-hung sidecar call blocking the request
+    # forever.
+    LEDGER_SIDECAR_TIMEOUT_S = float(os.environ.get("LEDGER_SIDECAR_TIMEOUT_S", "45"))
 
     # --- WhatsApp / SMS channel clients ---
     # "dummy" (default, logs instead of sending — fully testable with no

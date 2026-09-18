@@ -13,6 +13,8 @@ interface AppState {
   phoneVerified: boolean;
   setPhone: (phone: string) => void;
   setPhoneVerified: (verified: boolean) => void;
+  onboardingSeen: boolean;
+  setOnboardingSeen: (seen: boolean) => void;
   loaded: boolean;
 }
 
@@ -23,6 +25,7 @@ const COUNTY_KEY = "@county-tracker/county";
 const WARD_KEY = "@county-tracker/ward";
 const PHONE_KEY = "@county-tracker/phone";
 const VERIFIED_KEY = "@county-tracker/phone_verified";
+const ONBOARDING_SEEN_KEY = "@county-tracker/onboarding_seen";
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang | null>(null);
@@ -30,22 +33,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ward, setWardState] = useState<string | null>(null);
   const [phone, setPhoneState] = useState<string | null>(null);
   const [phoneVerified, setPhoneVerifiedState] = useState(false);
+  const [onboardingSeen, setOnboardingSeenState] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [storedLang, storedCounty, storedWard, storedPhone, storedVerified] = await Promise.all([
+      const [storedLang, storedCounty, storedWard, storedPhone, storedVerified, storedOnboardingSeen] = await Promise.all([
         AsyncStorage.getItem(LANG_KEY),
         AsyncStorage.getItem(COUNTY_KEY),
         AsyncStorage.getItem(WARD_KEY),
         AsyncStorage.getItem(PHONE_KEY),
         AsyncStorage.getItem(VERIFIED_KEY),
+        AsyncStorage.getItem(ONBOARDING_SEEN_KEY),
       ]);
       if (storedLang) setLangState(storedLang as Lang);
       if (storedCounty) setCountyState(storedCounty);
       if (storedWard) setWardState(storedWard);
       if (storedPhone) setPhoneState(storedPhone);
       setPhoneVerifiedState(storedVerified === "true");
+      setOnboardingSeenState(storedOnboardingSeen === "true");
       setLoaded(true);
     })();
   }, []);
@@ -70,6 +76,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setPhoneVerifiedState(verified);
     AsyncStorage.setItem(VERIFIED_KEY, verified ? "true" : "false");
   };
+  const setOnboardingSeen = (seen: boolean) => {
+    setOnboardingSeenState(seen);
+    AsyncStorage.setItem(ONBOARDING_SEEN_KEY, seen ? "true" : "false");
+  };
 
   return (
     <AppContext.Provider
@@ -78,6 +88,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         county, setCounty,
         ward, setWard,
         phone, phoneVerified, setPhone, setPhoneVerified,
+        onboardingSeen, setOnboardingSeen,
         loaded,
       }}
     >

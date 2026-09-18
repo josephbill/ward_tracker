@@ -26,6 +26,15 @@ from dataclasses import dataclass
 from typing import Any
 
 
+class LedgerUnavailableError(Exception):
+    """The configured ledger backend couldn't be reached (sidecar down,
+    timed out, DNS failure, ...). Raised instead of letting the underlying
+    network exception surface as an unhandled 500 — callers (api/reports.py,
+    api/issues.py) catch this specifically and return a clean 503 so the
+    mobile app's offline queue can tell "the server rejected this" apart
+    from "we couldn't even reach the ledger" and retry accordingly."""
+
+
 @dataclass
 class LedgerReceipt:
     ledger_ref: str

@@ -20,3 +20,21 @@ export function t(lang: Lang, key: string, vars?: Record<string, string | number
   }
   return template;
 }
+
+// Maps the backend's `{"error": "<code>"}` body (see backend/app/api/*.py)
+// to a translated, resident-facing sentence. Without this, a failed
+// request-otp/submit-issue call showed the raw API error code itself (e.g.
+// "ledger_unavailable") as the alert body — meaningless to a non-technical
+// reader and untranslated regardless of selected language.
+const API_ERROR_KEYS: Record<string, string> = {
+  ledger_unavailable: "error_ledger_unavailable",
+  phone_not_verified: "error_phone_not_verified",
+  rate_limited: "error_rate_limited",
+  unknown_project: "error_unknown_project",
+  invalid_or_expired_code: "otpMismatchError",
+};
+
+export function translateApiError(lang: Lang, message?: string): string {
+  const key = message ? API_ERROR_KEYS[message] : undefined;
+  return t(lang, key ?? "error_generic");
+}

@@ -9,6 +9,7 @@ import { startAutoSync, syncNow } from "./src/offline/syncManager";
 import { initAnalytics } from "./src/services/analytics";
 
 import LanguageSelectScreen from "./src/screens/LanguageSelectScreen";
+import OnboardingScreen from "./src/screens/OnboardingScreen";
 import CountySelectScreen from "./src/screens/CountySelectScreen";
 import WardSelectScreen from "./src/screens/WardSelectScreen";
 import WardProjectsScreen from "./src/screens/WardProjectsScreen";
@@ -24,19 +25,22 @@ import MenuButton from "./src/components/NavMenu";
 
 const Stack = createNativeStackNavigator();
 
-// Journey per the product brief: language -> county -> ward -> browse/report.
-// Each step is skipped on relaunch once its choice is persisted (AppContext
-// loads all of them from AsyncStorage before `loaded` flips true), so a
-// returning resident lands straight on their ward's project list.
-function initialRoute(lang: unknown, county: unknown, ward: unknown): string {
+// Journey per the product brief: language -> onboarding -> county -> ward ->
+// browse/report. Each step is skipped on relaunch once its choice is
+// persisted (AppContext loads all of them from AsyncStorage before `loaded`
+// flips true), so a returning resident lands straight on their ward's
+// project list — onboarding included, it's a once-ever story walkthrough,
+// not something shown on every launch.
+function initialRoute(lang: unknown, onboardingSeen: boolean, county: unknown, ward: unknown): string {
   if (!lang) return "LanguageSelect";
+  if (!onboardingSeen) return "Onboarding";
   if (!county) return "CountySelect";
   if (!ward) return "WardSelect";
   return "WardProjects";
 }
 
 function RootNavigator() {
-  const { lang, county, ward, loaded } = useAppState();
+  const { lang, county, ward, onboardingSeen, loaded } = useAppState();
 
   useEffect(() => {
     const stop = startAutoSync();
@@ -49,7 +53,7 @@ function RootNavigator() {
 
   return (
     <Stack.Navigator
-      initialRouteName={initialRoute(lang, county, ward)}
+      initialRouteName={initialRoute(lang, onboardingSeen, county, ward)}
       screenOptions={({ navigation }) => ({
         // Every screen gets a real header (with React Navigation's automatic
         // back button whenever there's somewhere to go back to) and this
@@ -59,6 +63,7 @@ function RootNavigator() {
       })}
     >
       <Stack.Screen name="LanguageSelect" component={LanguageSelectScreen} options={{ title: "" }} />
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ title: "", headerShown: false }} />
       <Stack.Screen name="CountySelect" component={CountySelectScreen} options={{ title: "" }} />
       <Stack.Screen name="WardSelect" component={WardSelectScreen} options={{ title: "" }} />
       <Stack.Screen name="WardProjects" component={WardProjectsScreen} options={{ title: "Projects" }} />

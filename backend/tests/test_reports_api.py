@@ -119,6 +119,31 @@ def test_submit_report_stores_optional_remarks(client, seeded_projects, verify_p
     assert resp2.get_json()["report"]["remarks"] is None
 
 
+def test_submit_report_returns_503_when_ledger_unreachable(client, seeded_projects, verify_phone, monkeypatch):
+    """A sidecar that's down/timing out (e.g. Render cold-starting — see
+    docs/DEPLOYMENT.md section 6) must not surface as an opaque 500: the
+    mobile app's offline queue needs a clean, catchable failure to retry
+    against, and the report must not be left half-saved with no ledger_ref."""
+    from app.services import report_service
+    from app.services.ledger import LedgerUnavailableError
+
+    class _BrokenLedger:
+        def submit_event(self, *args, **kwargs):
+            raise LedgerUnavailableError("sidecar unreachable")
+
+    monkeypatch.setattr(report_service, "get_ledger_client", lambda config: _BrokenLedger())
+    verify_phone("+254700000099")
+
+    resp = client.post("/api/reports", json={
+        "project_id": "KASIKEU-2022-23-001", "phone": "+254700000099", "claim": "not_delivered", "channel": "app",
+    })
+    assert resp.status_code == 503
+    assert resp.get_json()["error"] == "ledger_unavailable"
+
+    mine = client.get("/api/reports/mine?phone=+254700000099&lang=en").get_json()
+    assert mine["count"] == 0
+
+
 def test_full_dispute_flow_end_to_end(client, seeded_projects, verify_phone):
     """The Section 10 'done' demo moment: 3 independent conflicting reports
     push a project into Disputed status, visible in the audit trail."""

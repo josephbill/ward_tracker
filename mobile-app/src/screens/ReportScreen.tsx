@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator, ScrollView, TextInput } from "react-native";
+import NetInfo from "@react-native-community/netinfo";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { useAppState } from "../state/AppContext";
 import { t, Lang } from "../i18n/i18n";
 import { Claim, fetchMyReports } from "../api/client";
-import { enqueueReport } from "../offline/queue";
+import { enqueueReport, getQueue } from "../offline/queue";
 import { syncNow } from "../offline/syncManager";
 import VoiceInputButton from "../components/VoiceInputButton";
 import { trackEvent } from "../services/analytics";
@@ -91,7 +92,7 @@ export default function ReportScreen({ route, navigation }: any) {
     if (!claim || !phone) return;
     setSubmitting(true);
     try {
-      await enqueueReport({
+      const queued = await enqueueReport({
         project_id: projectId,
         phone,
         claim,
@@ -102,19 +103,42 @@ export default function ReportScreen({ route, navigation }: any) {
         remarks: remarks.trim() || null,
         photoUri,
       });
-      // Fire-and-forget: succeeds immediately if online, otherwise the
-      // report stays queued and syncManager's NetInfo listener retries
-      // automatically — the UI never blocks on network either way.
-      syncNow();
       trackEvent(existingClaim ? "report_updated" : "report_submitted",
         { project_id: projectId, claim, has_remarks: !!remarks.trim(), has_photo: !!photoUri });
+
+      // The report is already saved locally either way (enqueueReport above
+      // never fails offline) — what's still unknown is whether it actually
+      // reached the backend/ledger yet. Only claim "submitted and logged to
+      // the audit trail" once that's actually confirmed; a stale success
+      // message here previously showed even when the sync attempt failed
+      // outright (e.g. the ledger sidecar timing out), so residents saw
+      // "logged to the tamper-proof audit trail" for a report that had, in
+      // fact, gone nowhere.
+      const netState = await NetInfo.fetch();
+      let flashMessageKey: string;
+      let flashMessageType: "success" | "info" | "warning";
+      if (!netState.isConnected || netState.isInternetReachable === false) {
+        flashMessageKey = "reportQueuedOffline";
+        flashMessageType = "info";
+      } else {
+        await syncNow();
+        const stillQueued = (await getQueue()).find((r) => r.localId === queued.localId);
+        if (!stillQueued) {
+          flashMessageKey = existingClaim ? "reportUpdatedFlash" : "reportSubmitted";
+          flashMessageType = "success";
+        } else {
+          flashMessageKey = "reportError";
+          flashMessageType = "warning";
+        }
+      }
+
       // Navigate immediately rather than gating it behind Alert.alert's
       // onPress — react-native-web doesn't reliably fire that callback (the
       // alert never renders on web), which left the resident stuck on this
       // screen after a successful submit with no visible confirmation and
       // no way back. WardProjectsScreen shows the confirmation as an inline
       // banner instead, driven by this route param.
-      navigation.navigate("WardProjects", { flashMessageKey: existingClaim ? "reportUpdatedFlash" : "reportSubmitted" });
+      navigation.navigate("WardProjects", { flashMessageKey, flashMessageType });
     } finally {
       setSubmitting(false);
     }

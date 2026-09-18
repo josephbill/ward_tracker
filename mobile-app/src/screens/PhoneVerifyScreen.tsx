@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 import { useAppState } from "../state/AppContext";
-import { t } from "../i18n/i18n";
+import { t, translateApiError } from "../i18n/i18n";
 import { requestOtp, verifyOtp } from "../api/client";
 import { showAlert } from "../services/alert";
 
@@ -26,7 +26,7 @@ export default function PhoneVerifyScreen({ navigation, route }: any) {
       await requestOtp(phone.trim());
       setCodeSent(true);
     } catch (err: any) {
-      showAlert(t(l, "genericErrorTitle"), err.message);
+      showAlert(t(l, "genericErrorTitle"), translateApiError(l, err.message));
     } finally {
       setBusy(false);
     }

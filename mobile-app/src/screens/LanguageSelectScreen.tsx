@@ -30,7 +30,7 @@ export default function LanguageSelectScreen({ navigation }: any) {
   const choose = (value: string) => {
     setLang(value as Lang);
     trackEvent("language_selected", { lang: value });
-    navigation.replace("CountySelect");
+    navigation.replace("Onboarding");
   };
 
   return (

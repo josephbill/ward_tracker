@@ -1,5 +1,6 @@
 from flask import Blueprint, current_app, jsonify, request
 
+from ..db import db
 from ..models import IssueReport, ISSUE_CATEGORIES
 from ..services.issue_service import (
     InvalidCategoryError,
@@ -7,6 +8,7 @@ from ..services.issue_service import (
     RateLimitedError,
     submit_issue,
 )
+from ..services.ledger import LedgerUnavailableError
 from ..services.uploads import save_photo
 
 issues_bp = Blueprint("issues", __name__)
@@ -75,10 +77,20 @@ def create_issue():
             description=description, photo_path=photo_path, gps_lat=gps_lat, gps_lon=gps_lon,
         )
     except InvalidCategoryError:
+        db.session.rollback()
         return jsonify({"error": "invalid_category", "valid_categories": ISSUE_CATEGORIES}), 400
     except PhoneNotVerifiedError:
+        # See the matching comment in api/reports.py's create_report(): a
+        # flushed-but-uncommitted row from get_or_create_reporter() isn't
+        # rolled back automatically just because the request returns
+        # normally instead of raising all the way out.
+        db.session.rollback()
         return jsonify({"error": "phone_not_verified"}), 403
     except RateLimitedError:
+        db.session.rollback()
         return jsonify({"error": "rate_limited"}), 429
+    except LedgerUnavailableError:
+        db.session.rollback()
+        return jsonify({"error": "ledger_unavailable"}), 503
 
     return jsonify({"issue": issue.to_dict()}), 201

@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator, ScrollView
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { useAppState } from "../state/AppContext";
-import { t, Lang } from "../i18n/i18n";
+import { t, Lang, translateApiError } from "../i18n/i18n";
 import { IssueCategory, submitIssue } from "../api/client";
 import VoiceInputButton from "../components/VoiceInputButton";
 import { trackEvent } from "../services/analytics";
@@ -82,7 +82,7 @@ export default function ReportIssueScreen({ navigation }: any) {
       // which left the resident stuck here after a successful submit.
       navigation.navigate("WardProjects", { flashMessageKey: "issueSubmitted" });
     } catch (err: any) {
-      showAlert(t(l, "genericErrorTitle"), err.message);
+      showAlert(t(l, "genericErrorTitle"), translateApiError(l, err.message));
     } finally {
       setSubmitting(false);
     }
