@@ -83,9 +83,15 @@ doesn't care which database backend it talks to, no code change needed).
 What you're accepting in the meantime:
 
 - **Data can vanish on redeploy.** Pxxl's containers are ephemeral like most
-  PaaS — a redeploy or restart can wipe `instance/`. Ward project data is
-  recoverable (`python seed.py` via Pxxl's shell/CLI access, if offered);
-  citizen reports submitted since the last deploy are not.
+  PaaS — a redeploy or restart can wipe `instance/`. Ward project data
+  repopulates itself automatically: `backend/Procfile`'s start command is
+  `python seed.py && gunicorn run:app ...`, so every container boot re-runs
+  the (idempotent — upserts by id, never duplicates) seed step before
+  gunicorn starts serving. **Citizen reports submitted since the last
+  deploy are not recoverable this way** — `seed.py` only repopulates
+  `Project` rows from `data/ward_projects.json`, it has no knowledge of
+  reports/issues a resident submitted; those are genuinely gone once
+  `instance/app.db` is wiped.
 - No real write-concurrency headroom under genuine multi-citizen traffic,
   and no backups — a provisioned Pxxl database gets both for free.
 - Upgrade path when ready: **New Project → Database** on Pxxl (see
