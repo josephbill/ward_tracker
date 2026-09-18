@@ -32,9 +32,15 @@ away from upgrading later — see step 4's trade-off notes.
 - `backend/run.py` binds to `0.0.0.0` and reads `PORT` from the environment
   (Pxxl assigns the port at runtime — a hardcoded port or `127.0.0.1` is the
   most common reason a Flask app that works locally fails to boot on a PaaS).
-- `backend/Procfile` (`web: gunicorn run:app --bind 0.0.0.0:$PORT --workers 2`)
+- `backend/Procfile` (`web: gunicorn run:app --bind 0.0.0.0:$PORT --workers 1`)
   — a production WSGI server; Flask's own dev server explicitly warns
-  against production use.
+  against production use. **Deliberately `--workers 1`**: `services/otp.py`
+  stores OTP codes in an in-memory dict, keyed by phone. With more than one
+  worker process, a `request-otp` and the following `verify-otp` can land on
+  different workers that don't share that dict, failing verification with
+  `invalid_or_expired_code` regardless of the code entered — confirmed live
+  (3 of 8 verify attempts failed this way with `--workers 2`). Moving the
+  store into the DB would allow more workers again; not done for this PoC.
 - `backend/requirements.txt` includes `gunicorn`.
 
 ## 2. Connect the repo, deploy the backend service
@@ -47,8 +53,8 @@ away from upgrading later — see step 4's trade-off notes.
    Before the first deploy, open **Build Configuration** and confirm:
    - **Install command**: `pip install -r requirements.txt`
    - **Start command**: set this explicitly to
-     `gunicorn run:app --bind 0.0.0.0:$PORT --workers 2` — matches
-     `backend/Procfile`. Don't assume auto-detection guessed this right:
+     `python seed.py && gunicorn run:app --bind 0.0.0.0:$PORT --workers 1` —
+     matches `backend/Procfile`. Don't assume auto-detection guessed this right:
      this repo's Flask app factory lives in `run.py` (`app = create_app()`),
      not a top-level `app.py`, and a generic Flask auto-detect commonly
      defaults to `gunicorn app:app`, which would build fine and then fail
@@ -73,6 +79,17 @@ table). At minimum for a real demo:
 | `COUNTY_NOTIFICATION_EMAIL` | `josephbill00@gmail.com` for testing |
 
 `PORT` is set by Pxxl itself — don't set it manually.
+
+**Do not set `LEDGER_BACKEND` to `hedera_sidecar` on this project** unless
+`ledger-sidecar/` is actually deployed as its own separate Pxxl project with
+real testnet credentials, and `LEDGER_SIDECAR_URL` points at *that* project's
+live URL. `localhost:4001` (the value in `backend/.env.example`, meant for
+local dev where both processes run on one machine) will never resolve inside
+this project's own container — confirmed live: every report submission threw
+an unhandled `requests.exceptions.ConnectionError` and 500'd before saving,
+because `LEDGER_BACKEND` had been set to `hedera_sidecar` with that localhost
+URL and nothing was listening on it. Leave `LEDGER_BACKEND` unset (defaults
+to `stub`) for this launch, matching the decision in the intro above.
 
 ## 4. Database — SQLite for this launch, the trade-off to know about
 
