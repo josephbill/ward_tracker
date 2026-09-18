@@ -2,15 +2,16 @@
 
 [Pxxl](https://pxxl.app/) ("a Nigerian alternative to Vercel/Render/Netlify")
 deploys straight from a connected GitHub repo, auto-detecting the stack. This
-repo is a monorepo (`backend/`, `mobile-app/`, `ledger-sidecar/`). Pxxl's own
-docs are explicit that the right way to handle that is **one project with
-multiple services** (each service gets its own base directory), not
-importing the same repo as several separate projects — see
-[docs.pxxl.app/deploy/multiple-services](https://docs.pxxl.app/deploy/multiple-services)
-— so that's the shape this guide follows: one Pxxl project, a `backend`
-service and (once you're ready for a public URL to hand to Sabilytics or
-anyone else) a `mobile-web` static-app service, added via the **Multiple
-Services** toggle in Build Configuration.
+repo is a monorepo (`backend/`, `mobile-app/`, `ledger-sidecar/`).
+
+Pxxl's own written docs describe a "Multiple Services" toggle for handling a
+monorepo as one project with several services — **in practice this wasn't
+findable in the actual dashboard** (same story as the "Health Check Path"
+field below), so this guide uses the simpler, confirmed-working shape
+instead: **two separate Pxxl projects pointed at the same repo**, one per
+root directory (`backend`, `mobile-app`). Functionally equivalent for this
+app's purposes — the backend just gets its own URL instead of sharing one
+with the static site.
 
 This guide is dashboard-based deliberately — deploying requires signing in
 to *your* Pxxl account, which isn't something to hand a credential for to an
@@ -91,39 +92,52 @@ What you're accepting in the meantime:
   `docs.pxxl.app/database/overview`), then point this project's
   `DATABASE_URL` at it and redeploy. Not part of this launch.
 
-## 5. Add the mobile app's web build as a second service, get its URL
+## 5. Deploy the mobile app's web build as its own second project
 
 This is the piece that turns into a public URL — the one to register with
 Sabilytics (see the mobile app's own `EXPO_PUBLIC_SABILYTICS_*` vars in
 `mobile-app/.env.example`) or hand to anyone testing the app in a browser.
 
-1. `mobile-app/package.json` has a `build:web` script
-   (`expo export --platform web`) that produces a plain static bundle in
-   `mobile-app/dist/` — confirmed working by running it directly. That's
-   what a **Static App** service wants: no server, no port, no start
-   command.
-2. In the same Pxxl project as the backend, open **Build Configuration** and
-   turn on **Multiple Services**. Add a second service:
-   - **Base directory**: `mobile-app`
-   - **Type**: Static App
+**This workspace's Pxxl dashboard has no distinct "Static Site" deploy
+mode** — confirmed the hard way: a project configured with just a build
+command and `dist/` as output still got treated as a long-running web
+service, checked for a listener on `$PORT`, and timed out forever because
+nothing was actually running to bind to it. So this isn't published as flat
+files; it runs a real (tiny) server:
+
+1. `mobile-app/package.json` has two scripts:
+   - `build:web` → `expo export --platform web`, produces the static bundle
+     in `mobile-app/dist/` — confirmed working by running it directly.
+   - `start:web` → `node serve-static.js`, a dependency-free static file
+     server (`mobile-app/serve-static.js`, uses only Node's built-in
+     `http`/`fs`/`path`) that binds to `0.0.0.0:$PORT`, serves `dist/`, and
+     falls back to `index.html` for unknown paths (client-side routes —
+     otherwise a hard refresh on anything but the root path 404s). Tested
+     directly: root returns `200 text/html`, a real asset returns `200`
+     with the right content type, an unknown path falls back correctly.
+2. **New Project → Deploy → GitHub** → same repo, same branch, same flow as
+   step 2 — this is a second, independent Pxxl project, not a second service
+   bolted onto the backend one.
+   - **Working/base directory**: `mobile-app`
+   - **Install command**: `npm install`
    - **Build command**: `npm run build:web`
-   - **Output directory**: `dist`
-3. **Environment variables for this service** (set *before* the build runs
+   - **Start command**: `npm run start:web`
+3. **Environment variables for this project** (set *before* the build runs
    — Expo inlines every `EXPO_PUBLIC_*` var into the JS bundle at export
-   time, and Pxxl's own docs confirm changing a variable doesn't reach an
-   already-built deployment; you have to rebuild):
+   time; a value changed after the fact needs a rebuild, not just a saved
+   variable, to actually take effect):
 
    | Variable | Value |
    |---|---|
-   | `EXPO_PUBLIC_API_BASE_URL` | the backend service's live URL from step 2 |
+   | `EXPO_PUBLIC_API_BASE_URL` | the backend project's live URL from step 2 |
    | `EXPO_PUBLIC_SABILYTICS_SITE_ID` | from Sabilytics, once you have a site registered (leave unset for now — analytics stays inert, everything else works) |
-   | `EXPO_PUBLIC_SABILYTICS_DOMAIN` | this static service's own Pxxl URL (below) |
+   | `EXPO_PUBLIC_SABILYTICS_DOMAIN` | this project's own Pxxl URL (below) |
    | `EXPO_PUBLIC_SABILYTICS_SCRIPT_URL` | from Sabilytics |
 
-4. Deploy this service. Pxxl assigns it a live URL — **that URL is your
+4. Deploy this project. Pxxl assigns it a live URL — **that URL is your
    Sabilytics domain**, per the decision to use the platform's own subdomain
    rather than a custom one. Register it with Sabilytics, then come back,
-   fill in the two Sabilytics vars above, and redeploy this service again so
+   fill in the two Sabilytics vars above, and redeploy this project again so
    the build-time vars actually take effect.
 
 ## 6. CLI / MCP alternatives
