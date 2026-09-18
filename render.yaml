@@ -1,0 +1,35 @@
+# Render Blueprint for the Hedera ledger sidecar only (ledger-sidecar/).
+# The Flask backend and the Expo web build stay on Pxxl — this just adds one
+# more service Render hosts, wired to the backend via LEDGER_SIDECAR_URL.
+#
+# Deploy: push this file to the repo root, then in the Render dashboard use
+# "New +" -> "Blueprint" and point it at this repo. See docs/DEPLOYMENT.md
+# section 7 for the full walkthrough (env var values, where to get them,
+# what to paste back into Pxxl afterwards).
+services:
+  - type: web
+    name: makueni-ledger-sidecar
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: ledger-sidecar
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: HEDERA_NETWORK
+        value: testnet
+      # Secrets — left blank here deliberately (sync: false means Render
+      # won't try to source these from this file or git; you paste the real
+      # values once in the Render dashboard after the Blueprint is created).
+      - key: HEDERA_OPERATOR_ID
+        sync: false
+      - key: HEDERA_OPERATOR_KEY
+        sync: false
+      # Reuses the topic already created during local dev (0.0.10583604) so
+      # this deploy's events land in the same audit trail as earlier
+      # testing, rather than starting a fresh, empty topic.
+      - key: HEDERA_TOPIC_ID
+        value: "0.0.10583604"
+      # PORT is injected by Render itself — index.js already reads
+      # process.env.PORT with a fallback, nothing to set here.

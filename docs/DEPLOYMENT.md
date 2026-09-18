@@ -11,7 +11,9 @@ field below), so this guide uses the simpler, confirmed-working shape
 instead: **two separate Pxxl projects pointed at the same repo**, one per
 root directory (`backend`, `mobile-app`). Functionally equivalent for this
 app's purposes — the backend just gets its own URL instead of sharing one
-with the static site.
+with the static site. `ledger-sidecar/` is the third piece and lives on
+**Render** instead (section 6) — this workspace ran out of free Pxxl
+project slots after the other two.
 
 This guide is dashboard-based deliberately — deploying requires signing in
 to *your* Pxxl account, which isn't something to hand a credential for to an
@@ -21,11 +23,13 @@ server — see `docs.pxxl.app/mcp/overview` — if you'd rather connect an agent
 with a scoped API key than click through the dashboard; untested here for
 whether it needs a paid plan, worth checking if you want that route instead.)
 
-**Scope of this launch, matching the decisions made for this deploy**: the
-backend runs on the local stub ledger (`LEDGER_BACKEND=stub`, already the
-default — `ledger-sidecar/` isn't deployed) and on SQLite (`DATABASE_URL`
-left unset) rather than a provisioned database. Both are one env-var change
-away from upgrading later — see step 4's trade-off notes.
+**Scope of this launch, matching the decisions made for this deploy**: SQLite
+(`DATABASE_URL` left unset) rather than a provisioned database — see step
+4's trade-off notes, one env-var change away from upgrading later. The
+ledger started on the local stub (`LEDGER_BACKEND=stub`, the default) and is
+being upgraded to the real Hedera-backed sidecar per section 6 below — until
+that section's step 5 is done on the backend project, `LEDGER_BACKEND`
+staying unset/`stub` is still the working fallback.
 
 ## 1. Prerequisites (already done in this repo)
 
@@ -163,7 +167,63 @@ files; it runs a real (tiny) server:
    fill in the two Sabilytics vars above, and redeploy this project again so
    the build-time vars actually take effect.
 
-## 6. CLI / MCP alternatives
+## 6. Ledger sidecar — hosted on Render instead of Pxxl
+
+`ledger-sidecar/` (the Node service that anchors report hashes to a real
+Hedera Consensus Service topic — see `LEDGER_BACKEND=hedera_sidecar` in
+`docs/ARCHITECTURE.md`) is deployed on **Render**, not Pxxl: this workspace
+ran out of free Pxxl project slots after the backend + mobile-app projects.
+Render's free tier covers a third small web service fine.
+
+**Prerequisites already sitting in `ledger-sidecar/.env` from local dev**
+(never committed — `.gitignore` excludes it): a real Hedera testnet operator
+account and a created topic (`0.0.10583604`). Deploying is just handing
+those same values to Render; no new Hedera setup needed unless you want a
+fresh topic.
+
+1. Push `render.yaml` (repo root) — already in this repo, defines the
+   `makueni-ledger-sidecar` service with `rootDir: ledger-sidecar`,
+   `npm install` / `npm start`, and a `/healthz` health check path (already
+   implemented in `ledger-sidecar/index.js`).
+2. In the [Render dashboard](https://dashboard.render.com/): **New + →
+   Blueprint** → connect this repo → Render reads `render.yaml` and
+   proposes the one service. Confirm and create it.
+3. Render will prompt for the two vars marked `sync: false` in
+   `render.yaml` (it won't pull secrets from a committed file, by design) —
+   paste in your local `ledger-sidecar/.env` values:
+
+   | Variable | Value |
+   |---|---|
+   | `HEDERA_OPERATOR_ID` | from `ledger-sidecar/.env` |
+   | `HEDERA_OPERATOR_KEY` | from `ledger-sidecar/.env` |
+
+   `HEDERA_NETWORK` and `HEDERA_TOPIC_ID` are already set as plain values in
+   `render.yaml`. `PORT` is injected by Render itself.
+4. Deploy. Render assigns a live URL like
+   `https://makueni-ledger-sidecar.onrender.com` — sanity-check it:
+   `GET <that-url>/healthz` should return `{"status":"ok"}`.
+5. **Back on Pxxl**, in the **backend** project's environment variables:
+   - `LEDGER_BACKEND` = `hedera_sidecar`
+   - `LEDGER_SIDECAR_URL` = the Render URL from step 4 (not
+     `localhost:4001` — that value only ever worked for two processes on
+     one machine, and caused every report submission to 500 with
+     `ConnectionRefusedError` when it was set on the deployed backend
+     pointing at nothing — see the live-testing notes above). Redeploy the
+     backend after changing this.
+6. Verify: submit a report through the app and check `ledger_ref` — it
+   should now read `0.0.10583604/<n>` (a real HCS sequence number) instead
+   of `stub-topic-0.0.0/<n>`, and the message should show up on
+   [HashScan testnet](https://hashscan.io/testnet/topic/0.0.10583604).
+
+**Render free-tier trade-off to know about**: a free web service spins down
+after 15 minutes of no traffic and takes a cold-start (~30–60s) to wake back
+up on the next request. The first report submission after a quiet period
+will be slow (the Flask backend's `requests.post(..., timeout=10.0)` in
+`hedera_sidecar_client.py` may even time out on a cold start) — acceptable
+for a demo, worth knowing if a live walkthrough hits it. Upgrading off the
+free plan removes the spin-down.
+
+## 7. CLI / MCP alternatives
 
 Pxxl also has a CLI (`pxxl deploy --name ... --domain pxxl.pro`,
 `pxxl redeploy proj_123`, `pxxl inspect`) and an MCP server
