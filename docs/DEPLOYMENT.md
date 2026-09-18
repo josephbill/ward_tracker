@@ -27,9 +27,10 @@ whether it needs a paid plan, worth checking if you want that route instead.)
 (`DATABASE_URL` left unset) rather than a provisioned database — see step
 4's trade-off notes, one env-var change away from upgrading later. The
 ledger started on the local stub (`LEDGER_BACKEND=stub`, the default) and is
-being upgraded to the real Hedera-backed sidecar per section 6 below — until
-that section's step 5 is done on the backend project, `LEDGER_BACKEND`
-staying unset/`stub` is still the working fallback.
+now the real Hedera-backed sidecar per section 6 below, deployed on Render
+and confirmed live (real `ledger_ref` values, independently visible on
+HashScan). `LEDGER_BACKEND=stub` remains the correct default for local dev
+unless you're also running the sidecar locally.
 
 ## 1. Prerequisites (already done in this repo)
 
@@ -84,16 +85,17 @@ table). At minimum for a real demo:
 
 `PORT` is set by Pxxl itself — don't set it manually.
 
-**Do not set `LEDGER_BACKEND` to `hedera_sidecar` on this project** unless
-`ledger-sidecar/` is actually deployed as its own separate Pxxl project with
-real testnet credentials, and `LEDGER_SIDECAR_URL` points at *that* project's
-live URL. `localhost:4001` (the value in `backend/.env.example`, meant for
-local dev where both processes run on one machine) will never resolve inside
-this project's own container — confirmed live: every report submission threw
-an unhandled `requests.exceptions.ConnectionError` and 500'd before saving,
-because `LEDGER_BACKEND` had been set to `hedera_sidecar` with that localhost
-URL and nothing was listening on it. Leave `LEDGER_BACKEND` unset (defaults
-to `stub`) for this launch, matching the decision in the intro above.
+**Do not set `LEDGER_BACKEND` to `hedera_sidecar` on this project unless
+`LEDGER_SIDECAR_URL` points at a real, already-deployed sidecar** — see
+section 6 below for the current setup (Render, not a second Pxxl project).
+`localhost:4001` (the value in `backend/.env.example`, meant for local dev
+where both processes run on one machine) will never resolve inside this
+project's own container. This was hit for real: `LEDGER_BACKEND` was set to
+`hedera_sidecar` with that localhost URL still in place, and every report
+submission threw an unhandled `requests.exceptions.ConnectionError` and
+500'd before saving. Fixed by deploying the sidecar for real and pointing
+`LEDGER_SIDECAR_URL` at it (section 6) — that's the production configuration
+now, not `stub`.
 
 ## 4. Database — SQLite for this launch, the trade-off to know about
 
@@ -215,13 +217,19 @@ fresh topic.
    of `stub-topic-0.0.0/<n>`, and the message should show up on
    [HashScan testnet](https://hashscan.io/testnet/topic/0.0.10583604).
 
+**This is the current live production configuration** — confirmed working
+end to end (live report submission → real `ledger_ref` → confirmed via the
+backend's own API afterward).
+
 **Render free-tier trade-off to know about**: a free web service spins down
 after 15 minutes of no traffic and takes a cold-start (~30–60s) to wake back
-up on the next request. The first report submission after a quiet period
-will be slow (the Flask backend's `requests.post(..., timeout=10.0)` in
-`hedera_sidecar_client.py` may even time out on a cold start) — acceptable
-for a demo, worth knowing if a live walkthrough hits it. Upgrading off the
-free plan removes the spin-down.
+up on the next request. The first report submission after a quiet period is
+slower than usual while the sidecar wakes up — the backend's sidecar request
+timeout (`LEDGER_SIDECAR_TIMEOUT_S`, default 45s — see
+`backend/app/config.py`) was raised from an original 10s specifically to
+absorb this after it caused a real timeout in production; if cold starts are
+still occasionally too slow, raise this further, or upgrade off the free
+Render plan to remove the spin-down entirely.
 
 ## 7. CLI / MCP alternatives
 

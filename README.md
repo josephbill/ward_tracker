@@ -22,10 +22,15 @@ vs. stubbed pending credentials, **[docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)**
 for a runnable walkthrough, **[docs/SPAM_DEFENSE.md](docs/SPAM_DEFENSE.md)**
 for the abuse-defense summary, **[docs/API.md](docs/API.md)** for the REST
 API, **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for deploying the full app
-(backend + mobile web build) to Pxxl, and
-**[docs/DEPLOYMENT_BRIMBLE.md](docs/DEPLOYMENT_BRIMBLE.md)** for the same on
-Brimble (needs a paid plan to get an API key for its MCP; the dashboard path
-in that doc doesn't).
+(backend + mobile web build on Pxxl, ledger sidecar on Render), and
+**[docs/DEPLOYMENT_BRIMBLE.md](docs/DEPLOYMENT_BRIMBLE.md)** for an
+alternative path on Brimble (needs a paid plan to get an API key for its
+MCP; the dashboard path in that doc doesn't). **[UPDATELOG.md](UPDATELOG.md)**
+tracks what's changed since the initial build, in plain language.
+
+**Live**: [wardtrackermobile.pxxlspace.cv](https://wardtrackermobile.pxxlspace.cv)
+(mobile web app) · backend at `wardtracker.pxxlspace.cv` · ledger sidecar on
+Render, anchoring to real Hedera testnet topic `0.0.10583604`.
 
 ## Quick start
 
@@ -35,12 +40,14 @@ cd backend
 pip install -r requirements.txt
 python seed.py            # loads real Kasikeu project data from data/ward_projects.json
 python run.py              # http://localhost:5055
-python -m pytest tests/    # 103 tests, no external credentials needed
+python -m pytest tests/    # 106 tests, no external credentials needed
 
 # Mobile app (Expo)
 cd ../mobile-app
 npm install
 npx expo start --web       # or scan the QR in Expo Go on a phone
+# npm run build:web / npm run start:web — production-style static export +
+# serve-static.js (see docs/DEPLOYMENT.md); not needed for local dev.
 
 # Bluetooth relay demo (simulated — see docs/ARCHITECTURE.md)
 cd ..
@@ -56,7 +63,10 @@ npm start                  # http://localhost:4001
 Nothing above needs any external account. Copy `backend/.env.example` to
 `.env` and `ledger-sidecar/.env.example` to `.env` to layer in real Hedera
 testnet / Twilio WhatsApp / Africa's Talking credentials — every integration
-point is a config flag, not a code change (see ARCHITECTURE.md's table).
+point is a config flag, not a code change (see ARCHITECTURE.md's table). In
+production, `LEDGER_BACKEND=hedera_sidecar` is set on the backend and points
+at the sidecar's Render URL rather than `localhost:4001` — see
+`docs/DEPLOYMENT.md` section 6.
 
 ## Repository layout
 
@@ -128,6 +138,18 @@ docs/              Architecture, API reference, spam-defense summary, demo scrip
   independent reports needed to confirm/dispute" instead of just a bare
   status label, and a dedicated Help screen explains what
   Reported/Confirmed/Disputed mean using the live threshold numbers.
+- **Onboarding**: a once-only, story-framed walkthrough shown right after
+  language selection (`mobile-app/src/screens/OnboardingScreen.tsx`) —
+  promise → transparency → your voice → the tamper-evident ledger → access
+  for everyone (WhatsApp/SMS/Bluetooth) — skippable, persisted so it never
+  repeats, guarded so it's unreachable without a language chosen first.
+- **Search filters**: every list screen (ward projects, local issues, my
+  reports) has a live search box filtering by name/description/category —
+  `mobile-app/src/components/ListSearchInput.tsx`.
+- **Honest submission status**: a report/issue submission only claims
+  "logged to the tamper-proof audit trail" once that's actually confirmed —
+  genuinely offline, and attempted-but-failed (e.g. a slow ledger sidecar),
+  show distinct, accurate messages instead (`ReportScreen.tsx`'s `submit()`).
 
 ## Known limitations (see docs/ARCHITECTURE.md for the full table)
 
