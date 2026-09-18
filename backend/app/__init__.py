@@ -53,4 +53,15 @@ def create_app(config_object: type = Config) -> Flask:
     def healthz():
         return {"status": "ok"}
 
+    # Most PaaS readiness/health checks default to probing "/" when no
+    # custom path is configured in their dashboard (confirmed the hard way:
+    # a Pxxl deploy's TCP check passed but its HTTP readiness check never
+    # did, because this app previously had no route at all for "/" — every
+    # real route lives under /api or /webhooks, so a check against "/" got a
+    # 404 and the platform never marked the deployment ready). Mirrors
+    # /healthz exactly; this doesn't replace it, both stay available.
+    @app.get("/")
+    def root_health():
+        return {"status": "ok", "service": "county-ward-tracker-api"}
+
     return app

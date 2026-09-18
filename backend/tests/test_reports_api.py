@@ -10,6 +10,16 @@ def test_cors_enabled_for_cross_origin_web_clients(client, seeded_projects):
     assert resp.headers.get("Access-Control-Allow-Origin") == "http://localhost:19100"
 
 
+def test_root_and_healthz_both_respond_ok(client):
+    """PaaS readiness/health checks commonly default to probing "/" with no
+    way to point them at /healthz instead — a real Pxxl deploy's HTTP
+    readiness check failed forever because "/" 404'd (every real route
+    lives under /api or /webhooks). Both must return 200 regardless of
+    which one a given platform's health check happens to hit."""
+    assert client.get("/").status_code == 200
+    assert client.get("/healthz").status_code == 200
+
+
 def test_list_projects_returns_translated_statements(client, seeded_projects):
     resp = client.get("/api/projects?ward=Kasikeu&lang=en")
     assert resp.status_code == 200
