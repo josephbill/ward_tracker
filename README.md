@@ -21,8 +21,11 @@ See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for what's fully real
 vs. stubbed pending credentials, **[docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)**
 for a runnable walkthrough, **[docs/SPAM_DEFENSE.md](docs/SPAM_DEFENSE.md)**
 for the abuse-defense summary, **[docs/API.md](docs/API.md)** for the REST
-API, and **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for deploying the
-backend to Pxxl.
+API, **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for deploying the full app
+(backend + mobile web build) to Pxxl, and
+**[docs/DEPLOYMENT_BRIMBLE.md](docs/DEPLOYMENT_BRIMBLE.md)** for the same on
+Brimble (needs a paid plan to get an API key for its MCP; the dashboard path
+in that doc doesn't).
 
 ## Quick start
 
@@ -32,7 +35,7 @@ cd backend
 pip install -r requirements.txt
 python seed.py            # loads real Kasikeu project data from data/ward_projects.json
 python run.py              # http://localhost:5055
-python -m pytest tests/    # 91 tests, no external credentials needed
+python -m pytest tests/    # 103 tests, no external credentials needed
 
 # Mobile app (Expo)
 cd ../mobile-app
@@ -42,6 +45,12 @@ npx expo start --web       # or scan the QR in Expo Go on a phone
 # Bluetooth relay demo (simulated — see docs/ARCHITECTURE.md)
 cd ..
 python scripts/simulate_bluetooth_relay.py --api http://localhost:5055
+
+# Ledger sidecar — ONLY needed if backend/.env sets LEDGER_BACKEND=hedera_sidecar
+# (report/issue submission will fail without this running when that's set)
+cd ledger-sidecar
+npm install
+npm start                  # http://localhost:4001
 ```
 
 Nothing above needs any external account. Copy `backend/.env.example` to
@@ -64,7 +73,7 @@ backend/          Flask API — the one shared backend every channel calls
   app/services/escalation.py     "What you can do next" contact lookup for disputed projects
   app/services/privacy.py        Shared GPS-rounding helper (neighbourhood-level precision)
   app/locales/{en,sw,kam}.json   Translated UI copy + statement templates
-  tests/                          91 pytest tests covering all of the above
+  tests/                          103 pytest tests covering all of the above
 
 data/              Real source PDF + parsed data/ward_projects.json +
                    project_name_translations.json (real Swahili / best-effort
@@ -100,6 +109,25 @@ docs/              Architecture, API reference, spam-defense summary, demo scrip
   report id — identically on app, WhatsApp (reply `E`), and SMS
   (`NEXT <code> <1-4>`), all rendered from one lookup table
   (`app/services/escalation.py` / `mobile-app/src/services/escalation.ts`).
+- **One report per OTP-verified citizen**: `app`/`bluetooth` report
+  submissions now require the phone to have completed OTP verification
+  server-side (`403 phone_not_verified` otherwise — previously only the
+  mobile UI enforced this, so a raw API call could skip it entirely), and
+  phone numbers are normalized before hashing
+  (`app/services/spam_defense.normalize_phone`) so "+254712345678",
+  "254712345678" and "0712345678" all resolve to the same identity — the
+  same citizen can no longer accumulate more than one active report per
+  project just by varying how they type their number. See
+  `docs/SPAM_DEFENSE.md`.
+- **Hedera mirror-node viewer**: the app's audit-trail screen fetches
+  directly from Hedera's public mirror-node API from the device itself (no
+  backend involved) so a resident can independently verify an anchored
+  report without trusting this app's backend at all — verified end-to-end
+  with real testnet credentials.
+- **Report-count progress + Help screen**: every project shows "X of Y
+  independent reports needed to confirm/dispute" instead of just a bare
+  status label, and a dedicated Help screen explains what
+  Reported/Confirmed/Disputed mean using the live threshold numbers.
 
 ## Known limitations (see docs/ARCHITECTURE.md for the full table)
 
@@ -127,6 +155,12 @@ docs/              Architecture, API reference, spam-defense summary, demo scrip
 - Sabilytics (https://www.sabilytics.com/) is a web-only analytics
   platform with no mobile SDK — `trackEvent()` calls are real on the web
   build and no-ops (dev-logged) on native. See ARCHITECTURE.md.
+- Phone-number normalization (`services/spam_defense.normalize_phone`) means
+  any `Reporter` row created before that change has a `phone_hash` computed
+  the old, non-normalized way — it won't be found again even by the exact
+  phone string that created it. Not a schema change (no migration needed),
+  but a pre-existing `backend/instance/app.db` should still be reset the
+  same way as the schema changes below for a clean identity space.
 - Several schema changes mid-build (the `remarks` field, the `issue_reports`
   table, `project_name_sw`/`project_name_kam`) mean a pre-existing
   `backend/instance/app.db` from an older version of this repo needs to be
@@ -144,6 +178,15 @@ docs/              Architecture, API reference, spam-defense summary, demo scrip
   notification currently goes to one hardcoded test address
   (`COUNTY_NOTIFICATION_EMAIL`), since there's no per-county contact lookup
   built yet and this pilot only seeds one county anyway.
+- **A `SENDBYTE_API_KEY` starting `sk_test_...` never delivers a real
+  email** — SendByte's sandbox mode queues it in their own dashboard only
+  (confirmed by calling the live API directly: `201`, `"sandbox":true`
+  every time). Get a `sk_live_...` key from SendByte for real delivery.
+  Separately, `python run.py` didn't configure Python's root logger, so
+  every `logger.info()`/`logger.exception()` call in the codebase — SendByte
+  sends included — went nowhere; fixed (`logging.basicConfig()` in
+  `run.py`), so a send now visibly logs
+  `[SendByte -> <to>] ... (status=..., sandbox=...)`.
 - **GPS is capped to ~111m precision** (`backend/app/services/privacy.py`)
   before it's ever written to the database — full precision is never
   retained anywhere. That's a deliberate privacy default, but it means

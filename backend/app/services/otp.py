@@ -16,33 +16,34 @@ deployment (SMS_BACKEND=africas_talking or similar with a live gateway).
 from __future__ import annotations
 
 import random
-import re
 from datetime import datetime, timedelta, timezone
 
+from .spam_defense import normalize_phone
+
 _OTP_TTL_MINUTES = 5
-_store: dict[str, tuple[str, datetime]] = {}  # phone -> (code, expires_at)
+_store: dict[str, tuple[str, datetime]] = {}  # normalized phone -> (code, expires_at)
 
 
 def request_otp(phone: str) -> str:
     code = f"{random.randint(0, 999999):06d}"
-    _store[phone] = (code, datetime.now(timezone.utc) + timedelta(minutes=_OTP_TTL_MINUTES))
+    _store[normalize_phone(phone)] = (code, datetime.now(timezone.utc) + timedelta(minutes=_OTP_TTL_MINUTES))
     return code
 
 
 def _last_six_digits(phone: str) -> str:
-    digits = re.sub(r"\D", "", phone)
-    return digits[-6:]
+    return normalize_phone(phone)[-6:]
 
 
 def verify_otp(phone: str, code: str) -> bool:
-    entry = _store.get(phone)
+    key = normalize_phone(phone)
+    entry = _store.get(key)
     if entry is None:
         return False
     stored_code, expires_at = entry
     if datetime.now(timezone.utc) > expires_at:
-        del _store[phone]
+        del _store[key]
         return False
     if code != stored_code and code != _last_six_digits(phone):
         return False
-    del _store[phone]
+    del _store[key]
     return True

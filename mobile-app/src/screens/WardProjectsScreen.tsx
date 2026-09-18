@@ -7,8 +7,8 @@ import { fetchProjects, Project } from "../api/client";
 import { cacheProjects, getCachedProjects, pendingCount } from "../offline/queue";
 import { onSyncComplete, syncNow } from "../offline/syncManager";
 
-export default function WardProjectsScreen({ navigation }: any) {
-  const { lang, county, ward } = useAppState();
+export default function WardProjectsScreen({ navigation, route }: any) {
+  const { lang, county, ward, setPhoneVerified } = useAppState();
   const l = lang || "sw";
   const [projects, setProjects] = useState<Project[]>([]);
   const [deliveredCount, setDeliveredCount] = useState(0);
@@ -17,6 +17,23 @@ export default function WardProjectsScreen({ navigation }: any) {
   const [offline, setOffline] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
+  const [flashMessage, setFlashMessage] = useState<string | null>(null);
+  const [needsReverify, setNeedsReverify] = useState(false);
+
+  // Report/issue submission lands here via navigate(..., { flashMessageKey })
+  // rather than an Alert.alert dialog — see ReportScreen/ReportIssueScreen's
+  // submit(): Alert.alert's onPress callback never fires on the web build,
+  // which previously left the resident stuck on the submission screen with
+  // no confirmation and no way back. This banner is the redirect target's
+  // confirmation instead, and works identically on every platform.
+  useEffect(() => {
+    const key = route?.params?.flashMessageKey;
+    if (!key) return;
+    setFlashMessage(key);
+    navigation.setParams({ flashMessageKey: undefined });
+    const timer = setTimeout(() => setFlashMessage(null), 5000);
+    return () => clearTimeout(timer);
+  }, [route?.params?.flashMessageKey]);
 
   const load = useCallback(async () => {
     if (!ward || !county) return;
@@ -53,8 +70,18 @@ export default function WardProjectsScreen({ navigation }: any) {
   useEffect(() => {
     load();
     pendingCount().then(setPending);
-    const unsub = onSyncComplete(() => {
+    const unsub = onSyncComplete((result) => {
       pendingCount().then(setPending);
+      if (result.needsReverify) {
+        // A queued report's phone looked verified on this device but the
+        // backend disagreed (403) — most likely because too much time has
+        // passed, or the backend's own state changed since. Clear the
+        // stale local flag through the real setter (keeps in-memory state
+        // and AsyncStorage in sync) so the next report attempt correctly
+        // re-prompts OTP instead of repeating the same silent failure.
+        setPhoneVerified(false);
+        setNeedsReverify(true);
+      }
       load();
     });
     const netUnsub = NetInfo.addEventListener((state) => {
@@ -84,6 +111,28 @@ export default function WardProjectsScreen({ navigation }: any) {
       </View>
 
       <Text style={styles.wardHeading}>{ward}{county ? `, ${county}` : ""}</Text>
+
+      {flashMessage && (
+        <Pressable
+          style={styles.successBanner}
+          onPress={() => setFlashMessage(null)}
+          accessibilityRole="button"
+          accessibilityLabel={t(l, flashMessage)}
+        >
+          <Text style={styles.successBannerText}>{t(l, flashMessage)}</Text>
+        </Pressable>
+      )}
+
+      {needsReverify && (
+        <Pressable
+          style={styles.reverifyBanner}
+          onPress={() => setNeedsReverify(false)}
+          accessibilityRole="button"
+          accessibilityLabel={t(l, "needsReverifyNotice")}
+        >
+          <Text style={styles.reverifyBannerText}>{t(l, "needsReverifyNotice")}</Text>
+        </Pressable>
+      )}
 
       {offline && (
         <View style={styles.offlineBanner}>
@@ -130,6 +179,11 @@ export default function WardProjectsScreen({ navigation }: any) {
               <Text style={styles.cardTitle}>{item.project_name}</Text>
               <Text style={styles.cardMeta}>{item.financial_year} · Ksh {item.allocated_amount_ksh.toLocaleString()}</Text>
               <Text style={styles.cardStatus}>{t(l, `verificationStatus_${item.verification_status}`)}</Text>
+              {!!item.verification_counts?.total_active_reports && (
+                <Text style={styles.cardReportCount}>
+                  {t(l, "totalReportsLabel", { count: item.verification_counts.total_active_reports })}
+                </Text>
+              )}
             </Pressable>
           )}
         />
@@ -144,6 +198,10 @@ const styles = StyleSheet.create({
   menuButton: { borderWidth: 1, borderColor: "#0b6e4f", borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, minHeight: 44, justifyContent: "center" },
   menuButtonText: { color: "#0b6e4f", fontSize: 12, fontWeight: "600" },
   wardHeading: { fontSize: 20, fontWeight: "700", marginBottom: 10 },
+  successBanner: { backgroundColor: "#e6f4ef", padding: 12, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: "#0b6e4f" },
+  successBannerText: { color: "#0b6e4f", fontSize: 13, fontWeight: "600" },
+  reverifyBanner: { backgroundColor: "#fdecea", padding: 12, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: "#b3261e" },
+  reverifyBannerText: { color: "#8a2a20", fontSize: 13, fontWeight: "600" },
   offlineBanner: { backgroundColor: "#fff3cd", padding: 10, borderRadius: 8, marginBottom: 8 },
   offlineBannerText: { color: "#664d03", fontSize: 13 },
   pendingBanner: { backgroundColor: "#e7f1ff", padding: 10, borderRadius: 8, marginBottom: 8 },
@@ -158,4 +216,5 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: "600" },
   cardMeta: { fontSize: 12, color: "#666", marginTop: 4 },
   cardStatus: { fontSize: 12, color: "#0b6e4f", marginTop: 4 },
+  cardReportCount: { fontSize: 11, color: "#888", marginTop: 2 },
 });

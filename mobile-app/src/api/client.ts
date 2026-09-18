@@ -13,6 +13,17 @@ export type CountyClaimedStatus = "delivered" | "ongoing" | "not_started" | "pla
 export type VerificationStatus = "reported" | "confirmed" | "partially_delivered" | "not_delivered" | "disputed";
 export type Claim = "confirmed_delivered" | "not_delivered" | "partially_delivered";
 
+// See aggregation.verification_progress() — a read-only view of the same
+// weights recompute_verification_status() uses, so residents can see how
+// close a project is to Confirmed/Disputed instead of just the end label.
+export interface VerificationCounts {
+  agree_count: number;
+  agree_needed: number;
+  disagree_count: number;
+  disagree_needed: number;
+  total_active_reports: number;
+}
+
 export interface Project {
   id: string;
   ward: string;
@@ -31,6 +42,13 @@ export interface Project {
   last_updated_at: string | null;
   verification_status: VerificationStatus;
   statement: string;
+  verification_counts: VerificationCounts;
+}
+
+export interface VerificationInfo {
+  confirmation_threshold: number;
+  dispute_threshold: number;
+  independence_radius_m: number;
 }
 
 export interface ReportPayload {
@@ -82,6 +100,13 @@ export function fetchProject(id: string, lang: string): Promise<Project & { repo
 
 export function fetchAuditTrail(projectId: string, lang: string) {
   return apiFetch(`/api/projects/${encodeURIComponent(projectId)}/audit-trail?lang=${encodeURIComponent(lang)}`);
+}
+
+// Powers the Help screen's explanation of what "verified"/"disputed" take —
+// reads live thresholds rather than hardcoding them so the copy stays
+// accurate if a deployment tunes CONFIRMATION_THRESHOLD_COUNT etc.
+export function fetchVerificationInfo(): Promise<VerificationInfo> {
+  return apiFetch("/api/verification-info");
 }
 
 export function fetchCounties(): Promise<{ counties: string[] }> {

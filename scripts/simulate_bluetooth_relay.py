@@ -57,9 +57,28 @@ def simulate(api_base: str, project_id: str, ward: str = "Kasikeu") -> None:
     hub_queue = LocalQueue("Ward hub")
 
     print("\n=== Step 1: Reporter has no cellular signal, submits via the app ===")
+    reporter_phone = f"+2547{uuid.uuid4().int % 10**8:08d}"
+
+    # The app already gates the Report screen behind OTP verification before
+    # a report can even be composed (see ReportScreen.tsx) — a Bluetooth-
+    # relayed report is queued from that exact same screen, just forwarded
+    # over BLE instead of the internet, so it's held to the same bar
+    # server-side (report_service.submit_report() rejects an unverified
+    # phone for channel="app"/"bluetooth" with 403 phone_not_verified).
+    # Mirror that here: verify via the same demo fallback the app's OTP
+    # screen documents (last 6 digits of the phone as the code).
+    requests.post(f"{api_base}/api/auth/request-otp", json={"phone": reporter_phone}, timeout=10).raise_for_status()
+    verify = requests.post(
+        f"{api_base}/api/auth/verify-otp",
+        json={"phone": reporter_phone, "code": reporter_phone[-6:]},
+        timeout=10,
+    )
+    verify.raise_for_status()
+    print(f"  [Reporter phone] verified {reporter_phone} via OTP (demo fallback code)")
+
     report = {
         "project_id": project_id,
-        "phone": f"+2547{uuid.uuid4().int % 10**8:08d}",
+        "phone": reporter_phone,
         "claim": "not_delivered",
         "channel": "bluetooth",
         "gps_lat": -1.9300,

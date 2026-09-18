@@ -15,6 +15,13 @@ Wards with ingested data, optionally scoped to one county.
 **`GET /api/languages`**
 Supported language codes.
 
+**`GET /api/verification-info`**
+The live threshold constants behind "verified"/"disputed" —
+`confirmation_threshold`, `dispute_threshold`, `independence_radius_m`
+(from `config.py`). The app's Help screen reads these rather than
+hardcoding the numbers, so the copy stays accurate if a deployment tunes
+them via env vars.
+
 ## Projects
 
 **`GET /api/projects?ward=Kasikeu&county=Makueni&lang=en`**
@@ -32,6 +39,13 @@ table/section/page it was lifted from in the source document, e.g.
 `"..., Section 3 'List of Ward Development Projects', Kasikeu Ward, p.11"`
 — narrower than `source_document`/`source_page` alone).
 
+Every project (list and detail) also carries `verification_counts` —
+`{agree_count, agree_needed, disagree_count, disagree_needed,
+total_active_reports}` — the same independent-report weights
+`recompute_verification_status()` uses internally, exposed read-only via
+`aggregation.verification_progress()`, so a resident can see e.g. "1 of 2
+independent reports needed to confirm" instead of just the end-state label.
+
 **`GET /api/projects/<project_id>?lang=en`**
 Single project detail, including its currently-active reports.
 
@@ -42,6 +56,13 @@ Full append-only event history for a project, each event carrying
 `description` and `event_type_label` are rendered in the requested language
 at read time from the event's own stored payload — see
 `backend/app/api/reports.py`'s `_render_event_description`.
+
+When `LEDGER_BACKEND=hedera_sidecar` and an event's `ledger_ref` is a real
+Hedera ref (`"<topicId>/<sequenceNumber>"`, not the stub's
+`"stub-topic-0.0.0/<n>"`), the app fetches that exact message straight from
+Hedera's public mirror-node REST API **from the device itself** — no backend
+involved — so a resident can independently confirm the anchored hash
+without trusting this API at all. See `mobile-app/src/services/hedera.ts`.
 
 ## Reports
 
@@ -67,6 +88,17 @@ Also accepts `multipart/form-data` with the same fields plus a `photo` file.
 (~111m/neighbourhood precision — `services/privacy.py`) before being stored,
 regardless of the precision the client sent; an uploaded photo has its EXIF
 metadata stripped before storage (`services/uploads.py`).
+
+For `channel="app"` or `channel="bluetooth"`, `phone` must belong to a
+reporter who has already completed `POST /api/auth/verify-otp` — otherwise
+this returns `403 {"error": "phone_not_verified"}`. `whatsapp`/`sms` are
+exempt (sending a message from a number is itself proof of controlling that
+SIM). This is also what guarantees "one report per citizen": phone numbers
+are normalized before hashing (`services/spam_defense.normalize_phone` —
+"+254712345678", "254712345678" and "0712345678" all resolve to the same
+identity), so the same OTP-verified person can never accumulate more than
+one active report per project by varying how they type their number — a
+second submission always supersedes the first (see `docs/SPAM_DEFENSE.md`).
 
 Response includes `status_changed` and `new_status` — the WhatsApp bot uses
 this to notify a reporter when their submission just pushed a project into

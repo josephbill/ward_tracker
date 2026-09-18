@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet, Image, Alert, ActivityIndicator, ScrollView, TextInput } from "react-native";
+import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator, ScrollView, TextInput } from "react-native";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { useAppState } from "../state/AppContext";
@@ -7,6 +7,7 @@ import { t, Lang } from "../i18n/i18n";
 import { IssueCategory, submitIssue } from "../api/client";
 import VoiceInputButton from "../components/VoiceInputButton";
 import { trackEvent } from "../services/analytics";
+import { showAlert } from "../services/alert";
 
 const CATEGORIES: IssueCategory[] = ["roads", "water", "health", "education", "electricity", "security", "sanitation", "other"];
 
@@ -44,7 +45,7 @@ export default function ReportIssueScreen({ navigation }: any) {
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert(t(l, "permissionNeededTitle"), t(l, "photoPermissionExplainer"));
+      showAlert(t(l, "permissionNeededTitle"), t(l, "photoPermissionExplainer"));
       return;
     }
     const result = fromCamera
@@ -58,7 +59,7 @@ export default function ReportIssueScreen({ navigation }: any) {
   const shareLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(t(l, "permissionNeededTitle"), t(l, "locationPermissionExplainer"));
+      showAlert(t(l, "permissionNeededTitle"), t(l, "locationPermissionExplainer"));
       return;
     }
     const pos = await Location.getCurrentPositionAsync({});
@@ -76,9 +77,12 @@ export default function ReportIssueScreen({ navigation }: any) {
         photoUri,
       });
       trackEvent("issue_submitted", { category, ward, has_photo: !!photoUri });
-      Alert.alert(t(l, "issueSubmitted"), "", [{ text: "OK", onPress: () => navigation.popToTop() }]);
+      // See ReportScreen.tsx's submit() for why this doesn't go through
+      // Alert.alert's onPress: that callback never fires on the web build,
+      // which left the resident stuck here after a successful submit.
+      navigation.navigate("WardProjects", { flashMessageKey: "issueSubmitted" });
     } catch (err: any) {
-      Alert.alert(t(l, "genericErrorTitle"), err.message);
+      showAlert(t(l, "genericErrorTitle"), err.message);
     } finally {
       setSubmitting(false);
     }

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet, Image, Alert, ActivityIndicator, ScrollView, TextInput } from "react-native";
+import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator, ScrollView, TextInput } from "react-native";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { useAppState } from "../state/AppContext";
 import { t, Lang } from "../i18n/i18n";
-import { Claim } from "../api/client";
+import { Claim, fetchMyReports } from "../api/client";
 import { enqueueReport } from "../offline/queue";
 import { syncNow } from "../offline/syncManager";
 import VoiceInputButton from "../components/VoiceInputButton";
 import { trackEvent } from "../services/analytics";
+import { showAlert } from "../services/alert";
 
 const CLAIM_OPTIONS: { key: Claim; labelKey: string }[] = [
   { key: "confirmed_delivered", labelKey: "confirmDelivered" },
@@ -26,6 +27,7 @@ export default function ReportScreen({ route, navigation }: any) {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [existingClaim, setExistingClaim] = useState<Claim | null>(null);
 
   useEffect(() => {
     if (!phoneVerified) {
@@ -33,12 +35,32 @@ export default function ReportScreen({ route, navigation }: any) {
     }
   }, [phoneVerified]);
 
+  useEffect(() => {
+    // A second submission from the same resident always supersedes the
+    // first rather than creating a separate, independently-counted report
+    // (see backend/docs/SPAM_DEFENSE.md) — but nothing on this screen used
+    // to say so, so pressing "Submit" again looked and felt exactly like
+    // filing a brand new report each time. Surface the existing one so
+    // this is unmistakably framed as an edit.
+    if (!phoneVerified || !phone) return;
+    fetchMyReports(phone, l)
+      .then((res) => {
+        const mine = res.reports.find((r) => r.project_id === projectId && r.active);
+        if (mine) {
+          setExistingClaim(mine.claim);
+          setClaim(mine.claim);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, phone, phoneVerified]);
+
   const pickPhoto = async (fromCamera: boolean) => {
     const permission = fromCamera
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert(t(l, "permissionNeededTitle"), t(l, "photoPermissionExplainer"));
+      showAlert(t(l, "permissionNeededTitle"), t(l, "photoPermissionExplainer"));
       return;
     }
     const result = fromCamera
@@ -53,7 +75,7 @@ export default function ReportScreen({ route, navigation }: any) {
     // Requested at point of use, not on app install (Section 3).
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(t(l, "permissionNeededTitle"), t(l, "locationPermissionExplainer"));
+      showAlert(t(l, "permissionNeededTitle"), t(l, "locationPermissionExplainer"));
       return;
     }
     const pos = await Location.getCurrentPositionAsync({});
@@ -84,10 +106,15 @@ export default function ReportScreen({ route, navigation }: any) {
       // report stays queued and syncManager's NetInfo listener retries
       // automatically — the UI never blocks on network either way.
       syncNow();
-      trackEvent("report_submitted", { project_id: projectId, claim, has_remarks: !!remarks.trim(), has_photo: !!photoUri });
-      Alert.alert(t(l, "reportSubmitted"), "", [
-        { text: "OK", onPress: () => navigation.popToTop() },
-      ]);
+      trackEvent(existingClaim ? "report_updated" : "report_submitted",
+        { project_id: projectId, claim, has_remarks: !!remarks.trim(), has_photo: !!photoUri });
+      // Navigate immediately rather than gating it behind Alert.alert's
+      // onPress — react-native-web doesn't reliably fire that callback (the
+      // alert never renders on web), which left the resident stuck on this
+      // screen after a successful submit with no visible confirmation and
+      // no way back. WardProjectsScreen shows the confirmation as an inline
+      // banner instead, driven by this route param.
+      navigation.navigate("WardProjects", { flashMessageKey: existingClaim ? "reportUpdatedFlash" : "reportSubmitted" });
     } finally {
       setSubmitting(false);
     }
@@ -96,6 +123,15 @@ export default function ReportScreen({ route, navigation }: any) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
       <Text style={styles.title}>{projectName}</Text>
+
+      {existingClaim && (
+        <View style={styles.existingReportBanner}>
+          <Text style={styles.existingReportText}>
+            {t(l, "alreadyReportedNotice", { claim: t(l, CLAIM_OPTIONS.find((o) => o.key === existingClaim)?.labelKey || "") })}
+          </Text>
+        </View>
+      )}
+
       <Text style={styles.question}>{t(l, "isThisProjectDelivered")}</Text>
 
       {CLAIM_OPTIONS.map((opt) => (
@@ -146,10 +182,12 @@ export default function ReportScreen({ route, navigation }: any) {
         onPress={submit}
         disabled={!claim || submitting}
         accessibilityRole="button"
-        accessibilityLabel={t(l, "submitReport")}
+        accessibilityLabel={t(l, existingClaim ? "updateReport" : "submitReport")}
         accessibilityState={{ disabled: !claim || submitting }}
       >
-        {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>{t(l, "submitReport")}</Text>}
+        {submitting ? <ActivityIndicator color="#fff" /> : (
+          <Text style={styles.submitButtonText}>{t(l, existingClaim ? "updateReport" : "submitReport")}</Text>
+        )}
       </Pressable>
     </ScrollView>
   );
@@ -159,6 +197,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   title: { fontSize: 18, fontWeight: "700", marginBottom: 4 },
   question: { fontSize: 15, color: "#444", marginBottom: 14 },
+  existingReportBanner: { backgroundColor: "#fff3cd", borderRadius: 8, padding: 10, marginBottom: 12 },
+  existingReportText: { fontSize: 12, color: "#664d03", lineHeight: 17 },
   claimButton: { borderWidth: 1, borderColor: "#ccc", borderRadius: 10, padding: 14, marginBottom: 8 },
   claimButtonSelected: { borderColor: "#0b6e4f", backgroundColor: "#e6f4ef" },
   claimButtonText: { fontSize: 15, textAlign: "center" },

@@ -58,6 +58,31 @@ export default function ProjectDetailScreen({ route, navigation }: any) {
         />
       </View>
 
+      <View style={styles.countsCard}>
+        <Text style={styles.countsLine}>
+          {t(l, "totalReportsLabel", { count: project.verification_counts.total_active_reports })}
+        </Text>
+        <ProgressBar
+          label={t(l, "verifiedFigureLabel", {
+            agreeCount: project.verification_counts.agree_count,
+            agreeNeeded: project.verification_counts.agree_needed,
+          })}
+          fraction={project.verification_counts.agree_count / project.verification_counts.agree_needed}
+          color="#0b6e4f"
+        />
+        <ProgressBar
+          label={t(l, "disputeFigureLabel", {
+            disagreeCount: project.verification_counts.disagree_count,
+            disagreeNeeded: project.verification_counts.disagree_needed,
+          })}
+          fraction={project.verification_counts.disagree_count / project.verification_counts.disagree_needed}
+          color="#b3261e"
+        />
+        <Pressable onPress={() => navigation.navigate("Help")} accessibilityRole="link">
+          <Text style={styles.helpLink}>{t(l, "helpTitle")} →</Text>
+        </Pressable>
+      </View>
+
       {project.verification_status === "disputed" && (
         <EscalationPanel
           lang={l as any}
@@ -106,6 +131,18 @@ function StatusPill({ label, value, emphasis }: { label: string; value: string; 
   );
 }
 
+function ProgressBar({ label, fraction, color }: { label: string; fraction: number; color: string }) {
+  const pct = Math.max(0, Math.min(1, fraction)) * 100;
+  return (
+    <View style={styles.progressWrap}>
+      <Text style={styles.progressLabel}>{label}</Text>
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: color }]} />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   title: { fontSize: 20, fontWeight: "700", marginBottom: 10 },
@@ -116,6 +153,13 @@ const styles = StyleSheet.create({
   pillLabel: { fontSize: 11, color: "#777" },
   pillValue: { fontSize: 13, fontWeight: "600", marginTop: 2 },
   pillValueEmphasis: { color: "#b3261e" },
+  countsCard: { backgroundColor: "#f7f9f8", borderRadius: 10, padding: 12, marginBottom: 20 },
+  countsLine: { fontSize: 12, color: "#555", marginBottom: 8, fontWeight: "600" },
+  progressWrap: { marginBottom: 8 },
+  progressLabel: { fontSize: 11, color: "#667", marginBottom: 4 },
+  progressTrack: { height: 6, backgroundColor: "#e2e8e5", borderRadius: 3, overflow: "hidden" },
+  progressFill: { height: 6, borderRadius: 3 },
+  helpLink: { fontSize: 12, color: "#0b6e4f", fontWeight: "600", marginTop: 4 },
   primaryButton: { backgroundColor: "#0b6e4f", padding: 14, borderRadius: 10, marginBottom: 10 },
   primaryButtonText: { color: "#fff", textAlign: "center", fontWeight: "600", fontSize: 16 },
   secondaryButton: { borderWidth: 1, borderColor: "#0b6e4f", padding: 14, borderRadius: 10, marginBottom: 16 },

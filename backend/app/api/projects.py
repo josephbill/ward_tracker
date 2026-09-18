@@ -2,6 +2,7 @@ from flask import Blueprint, current_app, jsonify, request
 
 from ..db import db
 from ..models import Project
+from ..services.aggregation import verification_progress
 from ..services.translation import render_project_statement, supported_languages
 
 projects_bp = Blueprint("projects", __name__)
@@ -17,6 +18,22 @@ def _lang_from_request() -> str:
 def list_languages():
     config = current_app.config_class
     return jsonify({"supported": supported_languages(), "default": config.DEFAULT_LANGUAGE})
+
+
+@projects_bp.get("/verification-info")
+def verification_info():
+    """The threshold constants behind "verified"/"disputed" — a resident-
+    facing Help screen (gap-fill Section 3) reads these rather than
+    hardcoding the numbers, so it stays accurate if a deployment ever tunes
+    DISPUTE_THRESHOLD_COUNT etc. via env vars (see config.py)."""
+    config = current_app.config_class
+    return jsonify(
+        {
+            "confirmation_threshold": config.CONFIRMATION_THRESHOLD_COUNT,
+            "dispute_threshold": config.DISPUTE_THRESHOLD_COUNT,
+            "independence_radius_m": config.DISPUTE_INDEPENDENCE_RADIUS_M,
+        }
+    )
 
 
 @projects_bp.get("/counties")
@@ -65,7 +82,12 @@ def list_projects():
             "purported_completion_rate": (delivered_count / len(projects)) if projects else 0,
             "delivered_count": delivered_count,
             "projects": [
-                {**p.to_dict(), "project_name": p.display_name(lang), "statement": render_project_statement(p.to_dict(), lang)}
+                {
+                    **p.to_dict(),
+                    "project_name": p.display_name(lang),
+                    "statement": render_project_statement(p.to_dict(), lang),
+                    "verification_counts": verification_progress(p),
+                }
                 for p in projects
             ],
         }
@@ -86,5 +108,6 @@ def get_project(project_id: str):
             "project_name": project.display_name(lang),
             "statement": render_project_statement(project.to_dict(), lang),
             "reports": active_reports,
+            "verification_counts": verification_progress(project),
         }
     )

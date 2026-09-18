@@ -1,9 +1,10 @@
 import React, { useRef, useState } from "react";
-import { Pressable, Text, StyleSheet, Platform, Alert } from "react-native";
+import { Pressable, Text, StyleSheet, Platform } from "react-native";
 import * as audioRecorder from "../services/audioRecorder";
 import { Lang } from "../i18n/i18n";
 import { t } from "../i18n/i18n";
 import { transcribeVoice } from "../api/client";
+import { showAlert } from "../services/alert";
 
 interface Props {
   lang: Lang;
@@ -41,7 +42,7 @@ export default function VoiceInputButton({ lang, onTranscript }: Props) {
   const startWeb = () => {
     const SpeechRecognition = (globalThis as any).SpeechRecognition || (globalThis as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      Alert.alert(t(lang, "genericErrorTitle"), t(lang, "voiceInputNotAvailableOnDevice"));
+      showAlert(t(lang, "genericErrorTitle"), t(lang, "voiceInputNotAvailableOnDevice"));
       return;
     }
     const recognition = new SpeechRecognition();
@@ -67,7 +68,7 @@ export default function VoiceInputButton({ lang, onTranscript }: Props) {
   const startNative = async () => {
     const granted = await audioRecorder.requestPermission();
     if (!granted) {
-      Alert.alert(t(lang, "permissionNeededTitle"), t(lang, "microphonePermissionExplainer"));
+      showAlert(t(lang, "permissionNeededTitle"), t(lang, "microphonePermissionExplainer"));
       return;
     }
     await audioRecorder.startRecording();
@@ -84,10 +85,10 @@ export default function VoiceInputButton({ lang, onTranscript }: Props) {
       if (transcript) {
         onTranscript(transcript);
       } else {
-        Alert.alert(t(lang, "voiceRecordedTitle"), t(lang, "voiceInputNotAvailableOnDevice"));
+        showAlert(t(lang, "voiceRecordedTitle"), t(lang, "voiceInputNotAvailableOnDevice"));
       }
     } catch (err: any) {
-      Alert.alert(t(lang, "genericErrorTitle"), err.message);
+      showAlert(t(lang, "genericErrorTitle"), err.message);
     } finally {
       setBusy(false);
     }

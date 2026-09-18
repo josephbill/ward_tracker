@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 import { useAppState } from "../state/AppContext";
 import { t } from "../i18n/i18n";
 import { requestOtp, verifyOtp } from "../api/client";
+import { showAlert } from "../services/alert";
 
 /**
  * Section 6: "app should require phone verification via OTP, not just
@@ -25,7 +26,7 @@ export default function PhoneVerifyScreen({ navigation, route }: any) {
       await requestOtp(phone.trim());
       setCodeSent(true);
     } catch (err: any) {
-      Alert.alert(t(l, "genericErrorTitle"), err.message);
+      showAlert(t(l, "genericErrorTitle"), err.message);
     } finally {
       setBusy(false);
     }
@@ -41,7 +42,7 @@ export default function PhoneVerifyScreen({ navigation, route }: any) {
       const returnParams = route.params?.returnParams ?? route.params;
       navigation.replace(returnTo, returnParams);
     } catch (err: any) {
-      Alert.alert(t(l, "genericErrorTitle"), t(l, "otpMismatchError"));
+      showAlert(t(l, "genericErrorTitle"), t(l, "otpMismatchError"));
     } finally {
       setBusy(false);
     }

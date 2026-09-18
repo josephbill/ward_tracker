@@ -12,7 +12,7 @@ import { getQueue, markAttempt, removeFromQueue, QueuedReport } from "./queue";
 const MAX_ATTEMPTS = 5;
 let syncing = false;
 
-export type SyncListener = (result: { synced: number; failed: number }) => void;
+export type SyncListener = (result: { synced: number; failed: number; needsReverify: boolean }) => void;
 const listeners = new Set<SyncListener>();
 
 export function onSyncComplete(listener: SyncListener): () => void {
@@ -20,11 +20,12 @@ export function onSyncComplete(listener: SyncListener): () => void {
   return () => listeners.delete(listener);
 }
 
-export async function syncNow(): Promise<{ synced: number; failed: number }> {
-  if (syncing) return { synced: 0, failed: 0 };
+export async function syncNow(): Promise<{ synced: number; failed: number; needsReverify: boolean }> {
+  if (syncing) return { synced: 0, failed: 0, needsReverify: false };
   syncing = true;
   let synced = 0;
   let failed = 0;
+  let needsReverify = false;
 
   try {
     const queue = await getQueue();
@@ -35,7 +36,22 @@ export async function syncNow(): Promise<{ synced: number; failed: number }> {
         await submitReport(toPayload(entry));
         await removeFromQueue(entry.localId);
         synced += 1;
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.message === "phone_not_verified") {
+          // The device believes this phone is OTP-verified (phoneVerified
+          // was true when the report was queued) but the backend no longer
+          // agrees — e.g. the backend's data was reset since. Retrying
+          // blindly would just hit 403 up to MAX_ATTEMPTS and then go
+          // silent, leaving the queue's "N waiting to sync" badge lying
+          // about a report that will never actually send. Reported back to
+          // the caller (not written to storage directly from here — this
+          // module isn't a React component, so it can't update
+          // AppContext's in-memory phoneVerified state itself, only
+          // AsyncStorage, which would leave the two out of sync for the
+          // rest of this session) so the listening screen can call
+          // setPhoneVerified(false) and get both in sync at once.
+          needsReverify = true;
+        }
         await markAttempt(entry.localId, "failed");
         failed += 1;
       }
@@ -45,9 +61,9 @@ export async function syncNow(): Promise<{ synced: number; failed: number }> {
   }
 
   if (synced > 0 || failed > 0) {
-    listeners.forEach((l) => l({ synced, failed }));
+    listeners.forEach((l) => l({ synced, failed, needsReverify }));
   }
-  return { synced, failed };
+  return { synced, failed, needsReverify };
 }
 
 function toPayload(entry: QueuedReport) {

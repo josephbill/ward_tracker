@@ -7,7 +7,7 @@ def test_dummy_email_client_never_raises_and_records_sends():
     assert dummy.sent == [("josephbill00@gmail.com", "Test", "<p>hi</p>")]
 
 
-def test_submitting_a_report_sends_a_county_notification_email(client, seeded_projects, app):
+def test_submitting_a_report_sends_a_county_notification_email(client, seeded_projects, app, verify_phone):
     # Must fetch the client via the app's OWN configured class (TestConfig),
     # not the plain Config import — get_email_client() caches a single
     # module-level client, so grabbing it via the wrong config class here
@@ -15,6 +15,7 @@ def test_submitting_a_report_sends_a_county_notification_email(client, seeded_pr
     # happens to resolve to (e.g. a real SendByteEmailClient, if a real
     # backend/.env is present) instead of the dummy TestConfig expects.
     dummy = get_email_client(app.config_class)
+    verify_phone("+254700555999")
 
     resp = client.post("/api/reports", json={
         "project_id": "KASIKEU-2022-23-001", "phone": "+254700555999",
@@ -29,7 +30,7 @@ def test_submitting_a_report_sends_a_county_notification_email(client, seeded_pr
     assert "Nothing built here yet." in html
 
 
-def test_email_failure_never_breaks_report_submission(client, seeded_projects, app, monkeypatch):
+def test_email_failure_never_breaks_report_submission(client, seeded_projects, app, monkeypatch, verify_phone):
     """The core guarantee: a broken email integration must never roll back
     or fail a report submission that has already succeeded."""
     import app.services.notifications as notifications_module
@@ -38,6 +39,7 @@ def test_email_failure_never_breaks_report_submission(client, seeded_projects, a
         raise RuntimeError("SendByte is down")
 
     monkeypatch.setattr(notifications_module, "get_email_client", boom)
+    verify_phone("+254700556000")
 
     resp = client.post("/api/reports", json={
         "project_id": "KASIKEU-2022-23-001", "phone": "+254700556000",

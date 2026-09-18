@@ -1,6 +1,6 @@
 from app.db import db
 from app.models import Project, Report, Reporter
-from app.services.aggregation import recompute_verification_status
+from app.services.aggregation import recompute_verification_status, verification_progress
 
 
 def _add_reporter(i: int) -> Reporter:
@@ -106,3 +106,36 @@ def test_not_started_project_agrees_with_not_delivered_claim(app, db, seeded_pro
     db.session.commit()
 
     assert recompute_verification_status(project) == "not_delivered"
+
+
+def test_verification_progress_is_read_only_and_matches_recompute(app, db, seeded_projects):
+    """verification_progress() must never mutate verification_status, and
+    its counts must reflect the exact same weights recompute_verification_status()
+    used to decide the status (gap-fill Section 3: "report count for a
+    verified figure")."""
+    project = Project.query.get("KASIKEU-2022-23-001")  # county says delivered
+    for i in range(2):  # one short of DISPUTE_THRESHOLD_COUNT (3)
+        r = _add_reporter(i)
+        _add_report(project.id, r, "not_delivered", lat=-1.0 + i * 5, lon=37.0 + i * 5)
+    db.session.commit()
+
+    before = project.verification_status
+    progress = verification_progress(project)
+    assert project.verification_status == before  # unchanged — read-only
+
+    assert progress["disagree_count"] == 2
+    assert progress["disagree_needed"] == 3
+    assert progress["agree_count"] == 0
+    assert progress["agree_needed"] == 2
+    assert progress["total_active_reports"] == 2
+
+
+def test_verification_progress_counts_grow_to_confirmed_threshold(app, db, seeded_projects):
+    project = Project.query.get("KASIKEU-2022-23-001")  # county says delivered
+    r = _add_reporter(0)
+    _add_report(project.id, r, "confirmed_delivered", lat=-1.0, lon=37.0)
+    db.session.commit()
+
+    progress = verification_progress(project)
+    assert progress["agree_count"] == 1
+    assert progress["agree_needed"] == 2  # one more independent agreement needed

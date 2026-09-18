@@ -4,7 +4,7 @@ from flask import Blueprint, current_app, jsonify, request
 
 from ..models import Project, Report, Reporter, StatusEvent
 from ..services.ledger import get_ledger_client
-from ..services.report_service import UnknownProjectError, submit_report
+from ..services.report_service import PhoneNotVerifiedError, UnknownProjectError, submit_report
 from ..services.spam_defense import hash_phone
 from ..services.translation import render_project_statement, t
 from ..services.uploads import save_photo
@@ -66,6 +66,8 @@ def create_report():
         )
     except UnknownProjectError:
         return jsonify({"error": "unknown_project"}), 404
+    except PhoneNotVerifiedError:
+        return jsonify({"error": "phone_not_verified"}), 403
 
     message = t(
         lang,
@@ -173,12 +175,27 @@ def audit_trail(project_id: str):
             payload = json.loads(e.payload_json)
             verified = ledger.verify(payload, e.ledger_ref)
         translated_description = _render_event_description(e, payload, lang)
+
+        # A "submission" event is permanent audit history even after the
+        # report it created is later superseded by the same reporter's next
+        # submission (never deleted — see docs/SPAM_DEFENSE.md). Without
+        # this flag, a citizen editing their report 3 times just LOOKS like
+        # 4 separate people reported, when only the last is actually active
+        # and counted toward verification_counts — surfaced here so the
+        # audit trail UI can show that distinction instead of implying
+        # (incorrectly) that every submission independently counts.
+        report_active = None
+        if e.event_type == "submission" and e.related_report_id:
+            related = Report.query.get(e.related_report_id)
+            report_active = related.active if related is not None else None
+
         trail.append(
             {
                 **e.to_dict(),
                 "description": translated_description,
                 "event_type_label": t(lang, f"event_type_{e.event_type}"),
                 "ledger_verified": verified,
+                "report_active": report_active,
             }
         )
 

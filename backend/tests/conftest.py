@@ -52,6 +52,25 @@ def db(app):
     return _db
 
 
+@pytest.fixture()
+def verify_phone(app, db):
+    """Returns a callable that marks a phone number OTP-verified the same
+    way POST /api/auth/verify-otp does — a precondition most report tests
+    need now that submit_report() requires phone_verified for channel="app"
+    /"bluetooth" (WhatsApp/SMS are exempt by design: sending FROM a number
+    is itself proof of controlling that SIM). Skips the HTTP round trip
+    since most callers just need "this reporter is already verified"."""
+    def _verify(raw_phone: str):
+        from app.services.report_service import get_or_create_reporter
+
+        reporter = get_or_create_reporter(raw_phone)
+        reporter.phone_verified = True
+        db.session.commit()
+        return reporter
+
+    return _verify
+
+
 SAMPLE_PROJECTS = [
     {
         "id": "KASIKEU-2022-23-001",

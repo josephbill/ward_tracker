@@ -59,7 +59,19 @@ class SendByteEmailClient(EmailClient):
             timeout=10,
         )
         resp.raise_for_status()
-        logger.info("[SendByte -> %s] %s (id=%s, status=%s)", to, subject, resp.json().get("id"), resp.json().get("status"))
+        body = resp.json()
+        # SendByte's own sandbox flag (true whenever SENDBYTE_API_KEY starts
+        # sk_test_) — a sandboxed send returns 201/"queued" exactly like a
+        # real one but is NEVER actually delivered by SMTP to `to`, only
+        # visible in SendByte's own dashboard. That distinction is the
+        # single most useful thing to see in this log line: a "queued,
+        # sandbox=True" here means the integration is working correctly and
+        # the missing inbox delivery is expected, not a bug — switching to a
+        # sk_live_... key is what turns on real delivery.
+        logger.info(
+            "[SendByte -> %s] %s (id=%s, status=%s, sandbox=%s)",
+            to, subject, body.get("id"), body.get("status"), body.get("sandbox"),
+        )
 
 
 _client: EmailClient | None = None

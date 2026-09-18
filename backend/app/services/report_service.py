@@ -33,6 +33,22 @@ class UnknownProjectError(Exception):
     pass
 
 
+class PhoneNotVerifiedError(Exception):
+    pass
+
+
+# Channels where the report was composed on a device the app itself already
+# gated behind OTP verification (see mobile-app/src/screens/ReportScreen.tsx
+# — it redirects to PhoneVerify before rendering the submit button; a
+# Bluetooth-relayed report is queued from that exact same screen, just
+# forwarded over BLE instead of the internet — see
+# scripts/simulate_bluetooth_relay.py's docstring). WhatsApp/SMS are
+# deliberately excluded: sending a message FROM a number is itself proof of
+# controlling that SIM, so there's no separate OTP step in those flows by
+# design (see whatsapp_bot.py / sms_bot.py).
+_CHANNELS_REQUIRING_OTP = {"app", "bluetooth"}
+
+
 @dataclass
 class SubmitReportResult:
     report: Report
@@ -89,6 +105,9 @@ def submit_report(
         raise UnknownProjectError(project_id)
 
     reporter = get_or_create_reporter(raw_phone)
+    if channel in _CHANNELS_REQUIRING_OTP and not reporter.phone_verified:
+        raise PhoneNotVerifiedError()
+
     gate = check_report_gate(reporter, project_id)
     gps_lat, gps_lon = round_gps(gps_lat, gps_lon)
 

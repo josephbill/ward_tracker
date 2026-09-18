@@ -91,33 +91,61 @@ def _cluster_weight(cluster: list[Report]) -> float:
     return sum(scores) / len(scores) if scores else 1.0
 
 
-def recompute_verification_status(project: Project) -> str:
-    """Recomputes and WRITES project.verification_status. Returns the new
-    status so callers can decide whether to log a status_change event."""
+def _weights(project: Project) -> dict:
+    """Shared by recompute_verification_status() (which WRITES the result)
+    and verification_progress() (a read-only view of the same numbers for
+    the "X of Y independent reports" UI — gap-fill Section 3) so the two
+    never drift apart."""
     active_reports = (
         Report.query.filter_by(project_id=project.id, active=True, excluded_from_aggregation=False).all()
     )
-
     agreement_map = _AGREEMENT_MATRIX.get(project.county_claimed_status, {})
     disagreeing = [r for r in active_reports if agreement_map.get(r.claim) is False]
     agreeing = [r for r in active_reports if agreement_map.get(r.claim) is True]
 
-    independent_disagree_clusters = _cluster_independent(disagreeing)
-    disagree_weight = sum(_cluster_weight(c) for c in independent_disagree_clusters)
+    disagree_weight = sum(_cluster_weight(c) for c in _cluster_independent(disagreeing))
+    agree_weight = sum(_cluster_weight(c) for c in _cluster_independent(agreeing))
 
-    if disagree_weight >= Config.DISPUTE_THRESHOLD_COUNT:
+    return {
+        "active_reports": active_reports,
+        "agreeing": agreeing,
+        "disagreeing": disagreeing,
+        "agree_weight": agree_weight,
+        "disagree_weight": disagree_weight,
+    }
+
+
+def recompute_verification_status(project: Project) -> str:
+    """Recomputes and WRITES project.verification_status. Returns the new
+    status so callers can decide whether to log a status_change event."""
+    w = _weights(project)
+
+    if w["disagree_weight"] >= Config.DISPUTE_THRESHOLD_COUNT:
         new_status = "disputed"
+    elif w["agree_weight"] >= Config.CONFIRMATION_THRESHOLD_COUNT:
+        dominant_claim = Counter(r.claim for r in w["agreeing"]).most_common(1)[0][0]
+        new_status = _CLAIM_TO_STATUS[dominant_claim]
     else:
-        independent_agree_clusters = _cluster_independent(agreeing)
-        agree_weight = sum(_cluster_weight(c) for c in independent_agree_clusters)
-        if agree_weight >= Config.CONFIRMATION_THRESHOLD_COUNT:
-            dominant_claim = Counter(r.claim for r in agreeing).most_common(1)[0][0]
-            new_status = _CLAIM_TO_STATUS[dominant_claim]
-        else:
-            new_status = "reported"
+        new_status = "reported"
 
     project.verification_status = new_status
     return new_status
+
+
+def verification_progress(project: Project) -> dict:
+    """Read-only "how close is this to Confirmed/Disputed" view — never
+    mutates project.verification_status. Powers the report-count UI: a
+    resident sees e.g. "1 of 2 independent reports needed to confirm" or
+    "2 of 3 independent reports needed to dispute" instead of just a bare
+    status label with no sense of how close/far it is from changing."""
+    w = _weights(project)
+    return {
+        "agree_count": round(w["agree_weight"], 2),
+        "agree_needed": Config.CONFIRMATION_THRESHOLD_COUNT,
+        "disagree_count": round(w["disagree_weight"], 2),
+        "disagree_needed": Config.DISPUTE_THRESHOLD_COUNT,
+        "total_active_reports": len(w["active_reports"]),
+    }
 
 
 def distinct_ward_count_for_reporter(reporter_id: str) -> int:

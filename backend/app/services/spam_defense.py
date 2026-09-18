@@ -7,6 +7,7 @@ score.
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
@@ -14,8 +15,28 @@ from ..config import Config
 from ..models import Report, Reporter
 
 
+def normalize_phone(raw_phone: str) -> str:
+    """Canonicalizes a Kenyan phone number to a stable digits-only form
+    (2547XXXXXXXX) regardless of how it was typed — "+254712345678",
+    "254712345678", "0712345678" and "0712 345 678" all normalize to the
+    same string. Without this, the exact same person typing their number
+    slightly differently across two sessions/screens becomes a DIFFERENT
+    Reporter identity (different phone_hash), which defeats the
+    one-active-report-per-citizen guarantee in check_report_gate() below —
+    each "identity" gets to submit its own report on the same project,
+    silently multiplying one citizen's voice."""
+    digits = re.sub(r"\D", "", raw_phone or "")
+    if digits.startswith("254"):
+        return digits
+    if digits.startswith("0") and len(digits) == 10:
+        return "254" + digits[1:]
+    if len(digits) == 9:  # bare "712345678", no prefix at all
+        return "254" + digits
+    return digits
+
+
 def hash_phone(raw_phone: str) -> str:
-    salted = f"{Config.PHONE_HASH_SALT}:{raw_phone.strip()}"
+    salted = f"{Config.PHONE_HASH_SALT}:{normalize_phone(raw_phone)}"
     return hashlib.sha256(salted.encode("utf-8")).hexdigest()
 
 

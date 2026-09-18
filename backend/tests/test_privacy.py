@@ -17,7 +17,8 @@ def test_round_gps_passes_through_none():
     assert round_gps(-1.5, None) == (-1.5, None)
 
 
-def test_submit_report_stores_rounded_gps(client, seeded_projects):
+def test_submit_report_stores_rounded_gps(client, seeded_projects, verify_phone):
+    verify_phone("+254700200001")
     resp = client.post("/api/reports", json={
         "project_id": "KASIKEU-2022-23-001", "phone": "+254700200001", "claim": "not_delivered",
         "channel": "app", "gps_lat": -1.234567891, "gps_lon": 37.987654321,

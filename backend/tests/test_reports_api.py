@@ -27,6 +27,43 @@ def test_list_projects_includes_purported_completion_rate(client, seeded_project
     assert data["purported_completion_rate"] == 0.5
 
 
+def test_verification_info_exposes_thresholds(client, seeded_projects):
+    """The Help screen (gap-fill Section 3) reads these rather than
+    hardcoding the numbers, so it stays correct if a deployment tunes them
+    via env vars."""
+    resp = client.get("/api/verification-info")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["confirmation_threshold"] == 2
+    assert body["dispute_threshold"] == 3
+    assert body["independence_radius_m"] == 500
+
+
+def test_project_responses_include_verification_counts(client, seeded_projects):
+    resp = client.get("/api/projects/KASIKEU-2022-23-001")
+    body = resp.get_json()
+    assert body["verification_counts"] == {
+        "agree_count": 0, "agree_needed": 2,
+        "disagree_count": 0, "disagree_needed": 3,
+        "total_active_reports": 0,
+    }
+
+    list_resp = client.get("/api/projects?ward=Kasikeu")
+    assert all("verification_counts" in p for p in list_resp.get_json()["projects"])
+
+
+def test_verification_counts_reflect_submitted_reports(client, seeded_projects, verify_phone):
+    project_id = "KASIKEU-2022-23-001"
+    verify_phone("+254700300001")
+    client.post("/api/reports", json={
+        "project_id": project_id, "phone": "+254700300001", "claim": "not_delivered",
+        "channel": "app", "gps_lat": -1.0, "gps_lon": 37.0,
+    })
+    body = client.get(f"/api/projects/{project_id}").get_json()
+    assert body["verification_counts"]["disagree_count"] == 1
+    assert body["verification_counts"]["total_active_reports"] == 1
+
+
 def test_list_counties_and_wards(client, seeded_projects):
     counties = client.get("/api/counties").get_json()
     assert counties["counties"] == ["Makueni"]
@@ -53,9 +90,10 @@ def test_submit_report_rejects_invalid_claim(client, seeded_projects):
     assert resp.status_code == 400
 
 
-def test_submit_report_stores_optional_remarks(client, seeded_projects):
+def test_submit_report_stores_optional_remarks(client, seeded_projects, verify_phone):
     """Remarks (typed or voice-transcribed — Section 9 item 1) are optional
     free text stored alongside the structured claim, never required."""
+    verify_phone("+254700000011")
     resp = client.post("/api/reports", json={
         "project_id": "KASIKEU-2022-23-001", "phone": "+254700000011", "claim": "not_delivered",
         "channel": "app", "remarks": "The borehole here has been dry since March.",
@@ -71,7 +109,7 @@ def test_submit_report_stores_optional_remarks(client, seeded_projects):
     assert resp2.get_json()["report"]["remarks"] is None
 
 
-def test_full_dispute_flow_end_to_end(client, seeded_projects):
+def test_full_dispute_flow_end_to_end(client, seeded_projects, verify_phone):
     """The Section 10 'done' demo moment: 3 independent conflicting reports
     push a project into Disputed status, visible in the audit trail."""
     project_id = "KASIKEU-2022-23-001"  # county says "delivered"
@@ -83,6 +121,7 @@ def test_full_dispute_flow_end_to_end(client, seeded_projects):
 
     last_resp = None
     for phone, lat, lon in phones_and_coords:
+        verify_phone(phone)
         last_resp = client.post("/api/reports", json={
             "project_id": project_id, "phone": phone, "claim": "not_delivered",
             "channel": "app", "gps_lat": lat, "gps_lon": lon,
@@ -103,12 +142,13 @@ def test_full_dispute_flow_end_to_end(client, seeded_projects):
     assert all(e["ledger_verified"] for e in trail["events"])
 
 
-def test_audit_trail_descriptions_are_translated(client, seeded_projects):
+def test_audit_trail_descriptions_are_translated(client, seeded_projects, verify_phone):
     """Audit trail event descriptions must go through translation like every
     other resident-facing string — previously they were hardcoded English
     regardless of `lang` (a real bug caught while auditing the app for
     incomplete translation coverage)."""
     project_id = "KASIKEU-2022-23-001"
+    verify_phone("+254700100050")
     client.post("/api/reports", json={"project_id": project_id, "phone": "+254700100050",
                                        "claim": "not_delivered", "channel": "app"})
 
@@ -122,8 +162,31 @@ def test_audit_trail_descriptions_are_translated(client, seeded_projects):
     assert sw["events"][0]["event_type_label"] == "Uwasilishaji"
 
 
-def test_project_detail_shows_active_reports_only(client, seeded_projects):
+def test_audit_trail_flags_superseded_submissions(client, seeded_projects, verify_phone):
+    """The screenshot-driven bug report: a resident editing their report
+    several times produces several "SUBMISSION" audit events that all LOOK
+    identical/independent, which reads as "the same person reported
+    multiple times and it all counts" even though only the last is active.
+    report_active must distinguish them so the UI can show that."""
     project_id = "KASIKEU-2022-23-001"
+    verify_phone("+254700100099")
+    for claim in ["not_delivered", "confirmed_delivered", "partially_delivered"]:
+        client.post("/api/reports", json={"project_id": project_id, "phone": "+254700100099",
+                                           "claim": claim, "channel": "app"})
+
+    trail = client.get(f"/api/projects/{project_id}/audit-trail").get_json()
+    submissions = [e for e in trail["events"] if e["event_type"] == "submission"]
+    assert len(submissions) == 3
+    assert [s["report_active"] for s in submissions] == [False, False, True]
+
+    # And the aggregate figure agrees: only 1 active report, not 3.
+    detail = client.get(f"/api/projects/{project_id}").get_json()
+    assert detail["verification_counts"]["total_active_reports"] == 1
+
+
+def test_project_detail_shows_active_reports_only(client, seeded_projects, verify_phone):
+    project_id = "KASIKEU-2022-23-001"
+    verify_phone("+254700100010")
     client.post("/api/reports", json={"project_id": project_id, "phone": "+254700100010",
                                        "claim": "not_delivered", "channel": "app"})
     client.post("/api/reports", json={"project_id": project_id, "phone": "+254700100010",
@@ -183,7 +246,8 @@ def test_otp_flow_verifies_phone(client, seeded_projects):
     assert resp.status_code == 200
 
     from app.services import otp
-    code = list(otp._store[phone])[0]
+    from app.services.spam_defense import normalize_phone
+    code = otp._store[normalize_phone(phone)][0]
 
     bad = client.post("/api/auth/verify-otp", json={"phone": phone, "code": "000000"})
     if code == "000000":

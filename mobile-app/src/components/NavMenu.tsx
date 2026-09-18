@@ -14,6 +14,7 @@ const DESTINATIONS: Destination[] = [
   { labelKey: "myReports", route: "MyReports", icon: "📝" },
   { labelKey: "localIssues", route: "IssuesList", icon: "⚠️" },
   { labelKey: "reportAnIssue", route: "ReportIssue", icon: "➕" },
+  { labelKey: "helpTitle", route: "Help", icon: "❓" },
   { labelKey: "changeWard", route: "WardSelect", icon: "🏘️" },
   { labelKey: "changeCounty", route: "CountySelect", icon: "📍" },
   { labelKey: "changeLanguage", route: "LanguageSelect", icon: "🌍" },

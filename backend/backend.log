@@ -1,0 +1,11 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+2026-09-17 22:21:34,214 INFO werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5055
+ * Running on http://192.168.0.10:5055
+2026-09-17 22:21:34,214 INFO werkzeug: [33mPress CTRL+C to quit[0m
+2026-09-17 22:21:34,216 INFO werkzeug:  * Restarting with stat
+2026-09-17 22:21:35,615 WARNING werkzeug:  * Debugger is active!
+2026-09-17 22:21:35,625 INFO werkzeug:  * Debugger PIN: 839-061-648
+2026-09-17 22:21:36,004 INFO werkzeug: 127.0.0.1 - - [17/Sep/2026 22:21:36] "GET /api/languages HTTP/1.1" 200 -

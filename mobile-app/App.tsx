@@ -19,6 +19,7 @@ import AuditTrailScreen from "./src/screens/AuditTrailScreen";
 import MyReportsScreen from "./src/screens/MyReportsScreen";
 import IssuesListScreen from "./src/screens/IssuesListScreen";
 import ReportIssueScreen from "./src/screens/ReportIssueScreen";
+import HelpScreen from "./src/screens/HelpScreen";
 import MenuButton from "./src/components/NavMenu";
 
 const Stack = createNativeStackNavigator();
@@ -68,6 +69,7 @@ function RootNavigator() {
       <Stack.Screen name="MyReports" component={MyReportsScreen} options={{ title: "My Reports" }} />
       <Stack.Screen name="IssuesList" component={IssuesListScreen} options={{ title: "Local Issues" }} />
       <Stack.Screen name="ReportIssue" component={ReportIssueScreen} options={{ title: "Report an Issue" }} />
+      <Stack.Screen name="Help" component={HelpScreen} options={{ title: "Help" }} />
     </Stack.Navigator>
   );
 }
