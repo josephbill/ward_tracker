@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useAppState } from "../state/AppContext";
 import { t } from "../i18n/i18n";
 import { fetchMyReports, MyReport } from "../api/client";
+import ListSearchInput from "../components/ListSearchInput";
 
 export default function MyReportsScreen({ navigation }: any) {
   const { lang, phone, phoneVerified } = useAppState();
   const l = lang || "sw";
   const [reports, setReports] = useState<MyReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (!phone || !phoneVerified) {
@@ -20,6 +22,17 @@ export default function MyReportsScreen({ navigation }: any) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [phone, phoneVerified, l]);
+
+  const filteredReports = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return reports;
+    return reports.filter(
+      (r) =>
+        r.project_name.toLowerCase().includes(q) ||
+        (r.ward ?? "").toLowerCase().includes(q) ||
+        t(l, `claim_${r.claim}`).toLowerCase().includes(q)
+    );
+  }, [reports, query, l]);
 
   if (!phone || !phoneVerified) {
     return (
@@ -39,11 +52,17 @@ export default function MyReportsScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
+      {reports.length > 0 && (
+        <ListSearchInput value={query} onChangeText={setQuery} placeholder={t(l, "searchPlaceholder")} />
+      )}
+
       {reports.length === 0 ? (
         <Text style={styles.explainer}>{t(l, "noReportsYet")}</Text>
+      ) : filteredReports.length === 0 ? (
+        <Text style={styles.explainer}>{t(l, "noSearchResults")}</Text>
       ) : (
         <FlatList
-          data={reports}
+          data={filteredReports}
           keyExtractor={(r) => r.id}
           renderItem={({ item }) => (
             <Pressable

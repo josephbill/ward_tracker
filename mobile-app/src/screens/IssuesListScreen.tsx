@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useAppState } from "../state/AppContext";
 import { t } from "../i18n/i18n";
 import { fetchIssues, Issue } from "../api/client";
+import ListSearchInput from "../components/ListSearchInput";
 
 export default function IssuesListScreen({ navigation }: any) {
   const { lang, county, ward } = useAppState();
   const l = lang || "sw";
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (!ward || !county) return;
@@ -18,19 +20,36 @@ export default function IssuesListScreen({ navigation }: any) {
       .finally(() => setLoading(false));
   }, [ward, county]);
 
+  const filteredIssues = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return issues;
+    return issues.filter(
+      (i) =>
+        i.title.toLowerCase().includes(q) ||
+        i.description?.toLowerCase().includes(q) ||
+        t(l, `issueCategory_${i.category}`).toLowerCase().includes(q)
+    );
+  }, [issues, query, l]);
+
   return (
     <View style={styles.container}>
       <Pressable style={styles.reportButton} onPress={() => navigation.navigate("ReportIssue")}>
         <Text style={styles.reportButtonText}>{t(l, "reportAnIssue")}</Text>
       </Pressable>
 
+      {issues.length > 0 && (
+        <ListSearchInput value={query} onChangeText={setQuery} placeholder={t(l, "searchPlaceholder")} />
+      )}
+
       {loading ? (
         <ActivityIndicator style={{ marginTop: 24 }} />
       ) : issues.length === 0 ? (
         <Text style={styles.empty}>{t(l, "noIssuesYet")}</Text>
+      ) : filteredIssues.length === 0 ? (
+        <Text style={styles.empty}>{t(l, "noSearchResults")}</Text>
       ) : (
         <FlatList
-          data={issues}
+          data={filteredIssues}
           keyExtractor={(i) => i.id}
           contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={({ item }) => (

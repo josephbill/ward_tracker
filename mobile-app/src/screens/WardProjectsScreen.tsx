@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { useAppState } from "../state/AppContext";
@@ -6,6 +6,7 @@ import { t } from "../i18n/i18n";
 import { fetchProjects, Project } from "../api/client";
 import { cacheProjects, getCachedProjects, pendingCount } from "../offline/queue";
 import { onSyncComplete, syncNow } from "../offline/syncManager";
+import ListSearchInput from "../components/ListSearchInput";
 
 export default function WardProjectsScreen({ navigation, route }: any) {
   const { lang, county, ward, setPhoneVerified } = useAppState();
@@ -19,6 +20,19 @@ export default function WardProjectsScreen({ navigation, route }: any) {
   const [pending, setPending] = useState(0);
   const [flashMessage, setFlashMessage] = useState<string | null>(null);
   const [flashType, setFlashType] = useState<"success" | "info" | "warning">("success");
+  const [query, setQuery] = useState("");
+
+  const filteredProjects = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter(
+      (p) =>
+        p.project_name.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.sector?.toLowerCase().includes(q) ||
+        p.subward?.toLowerCase().includes(q)
+    );
+  }, [projects, query]);
   const [needsReverify, setNeedsReverify] = useState(false);
 
   // Report/issue submission lands here via navigate(..., { flashMessageKey })
@@ -174,13 +188,19 @@ export default function WardProjectsScreen({ navigation, route }: any) {
         </View>
       )}
 
+      {projects.length > 0 && (
+        <ListSearchInput value={query} onChangeText={setQuery} placeholder={t(l, "searchPlaceholder")} />
+      )}
+
       {loading ? (
         <ActivityIndicator style={{ marginTop: 24 }} />
       ) : projects.length === 0 ? (
         <Text style={styles.empty}>{t(l, "noProjectsFound")}</Text>
+      ) : filteredProjects.length === 0 ? (
+        <Text style={styles.empty}>{t(l, "noSearchResults")}</Text>
       ) : (
         <FlatList
-          data={projects}
+          data={filteredProjects}
           keyExtractor={(p) => p.id}
           contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={({ item }) => (

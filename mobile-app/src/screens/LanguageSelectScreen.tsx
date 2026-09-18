@@ -25,12 +25,27 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
 ];
 
 export default function LanguageSelectScreen({ navigation }: any) {
-  const { setLang } = useAppState();
+  const { setLang, onboardingSeen } = useAppState();
 
   const choose = (value: string) => {
     setLang(value as Lang);
     trackEvent("language_selected", { lang: value });
-    navigation.replace("Onboarding");
+    // Only a genuine first-time pick goes through the onboarding story.
+    // This screen is also reached later as "Badilisha lugha" from the menu
+    // (NavMenu.tsx) for a resident who's already set up and browsing —
+    // routing that case through Onboarding too (as this used to,
+    // unconditionally) forced them through the whole story again and then
+    // dumped them back on CountySelect, discarding their place in the app
+    // even though their county/ward choice was still saved underneath.
+    if (onboardingSeen && navigation.canGoBack()) {
+      navigation.goBack();
+    } else if (onboardingSeen) {
+      // Reached with nothing to go back to (e.g. a deep link straight to
+      // this screen) — land somewhere useful rather than a no-op goBack().
+      navigation.replace("WardProjects");
+    } else {
+      navigation.replace("Onboarding");
+    }
   };
 
   return (
