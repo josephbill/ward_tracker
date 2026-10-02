@@ -11,10 +11,10 @@ python-dotenv==1.0.1
 
 # Optional — only needed if WHATSAPP_BACKEND=twilio or SMS_BACKEND is set to
 # use Twilio's SMS API instead of the default dummy client.
-# twilio==9.3.2
+twilio==9.3.2
 
 # Optional — only needed if SMS_BACKEND=africas_talking.
-# africastalking==1.2.9
+africastalking==1.2.9
 
 # Optional — only needed if STT_BACKEND=openai_whisper (voice-to-text on
 # native devices; the web build transcribes client-side instead).

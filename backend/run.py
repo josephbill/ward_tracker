@@ -28,6 +28,6 @@ if __name__ == "__main__":
     # 127.0.0.1 or a hardcoded port is the #1 reason a Flask app that works
     # locally fails to come up on a host like this. Defaults (5055,
     # debug on) keep local `python run.py` behavior exactly as before.
-    port = int(os.environ.get("PORT", 5055))
+    port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "true").lower() == "true"
     app.run(host="0.0.0.0", port=port, debug=debug)

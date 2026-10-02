@@ -74,6 +74,23 @@ def test_verification_counts_reflect_submitted_reports(client, seeded_projects, 
     assert body["verification_counts"]["total_active_reports"] == 1
 
 
+def test_matching_claim_counts_toward_confirmation_not_dispute(client, seeded_projects, verify_phone):
+    """Only the dispute path (a claim disagreeing with the county's own
+    status) had coverage before this — nothing proved a claim that AGREES
+    with county_claimed_status actually counts toward confirmation instead.
+    KASIKEU-2022-23-001's county_claimed_status is "delivered"
+    (see conftest.py's SAMPLE_PROJECTS), so "confirmed_delivered" is the one
+    claim _AGREEMENT_MATRIX marks as agreeing with it."""
+    project_id = "KASIKEU-2022-23-001"
+    verify_phone("+254700300002")
+    client.post("/api/reports", json={
+        "project_id": project_id, "phone": "+254700300002", "claim": "confirmed_delivered", "channel": "app",
+    })
+    body = client.get(f"/api/projects/{project_id}").get_json()
+    assert body["verification_counts"]["agree_count"] == 1
+    assert body["verification_counts"]["disagree_count"] == 0
+
+
 def test_list_counties_and_wards(client, seeded_projects):
     counties = client.get("/api/counties").get_json()
     assert counties["counties"] == ["Makueni"]
