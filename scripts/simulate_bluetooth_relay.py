@@ -97,6 +97,7 @@ def simulate(api_base: str, project_id: str, ward: str = "Kasikeu") -> None:
 
     print("\n=== Step 3: Hub itself has no connectivity yet — holds the report ===")
     print(f"  [Ward hub] local relay queue size: {len(hub_queue.items)}")
+    print(hub_queue.items)
     time.sleep(0.5)
 
     print("\n=== Step 4: Hub reaches connectivity (e.g. back at the shop) and syncs to backend ===")
@@ -116,7 +117,7 @@ def simulate(api_base: str, project_id: str, ward: str = "Kasikeu") -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--api", default="http://127.0.0.1:5055", help="Flask backend base URL")
+    parser.add_argument("--api", default="http://127.0.0.1:5000", help="Flask backend base URL")
     parser.add_argument("--project-id", default="KASIKEU-2023-24-013", help="Project id to report on")
     args = parser.parse_args()
     simulate(args.api, args.project_id)
