@@ -43,6 +43,7 @@ python run.py              # http://localhost:5055
 python -m pytest tests/    # 106 tests, no external credentials needed
 
 # Mobile app (Expo)
+# debugging here
 cd ../mobile-app
 npm install
 npx expo start --web       # or scan the QR in Expo Go on a phone
