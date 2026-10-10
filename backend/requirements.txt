@@ -19,4 +19,4 @@ africastalking==1.2.9
 # Optional — only needed if STT_BACKEND=openai_whisper (voice-to-text on
 # native devices; the web build transcribes client-side instead).
 # openai==1.51.0
-psycopg
+psycopg[binary]
