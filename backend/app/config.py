@@ -15,11 +15,21 @@ logger = logging.getLogger("config")
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 
-# Every backend/.env.example value is documented as "copy to .env and fill
-# in what you have" — that only actually works if something loads the file.
-# Real env vars (e.g. ones a PaaS like Pxxl sets directly) always win;
-# load_dotenv() never overwrites a key that's already set.
-load_dotenv(BACKEND_ROOT / ".env")
+# CHANGED: Only load a .env file when we are NOT running on a platform that
+# injects env vars directly (Pxxl sets PXXL_ENV, Render sets RENDER, etc.).
+# A stray committed .env in the deploy source can otherwise shadow platform
+# values for any key not already set. load_dotenv() never overwrites an
+# existing key, but this guard makes the intent explicit and prevents a
+# surprise if someone commits a .env by accident.
+_ENV_FILE = BACKEND_ROOT / ".env"
+_ON_PLATFORM = bool(
+    os.environ.get("PXXL_ENV")
+    or os.environ.get("PXXL")
+    or os.environ.get("RENDER")
+    or os.environ.get("DYNO")  # Heroku-style
+)
+if _ENV_FILE.exists() and not _ON_PLATFORM:
+    load_dotenv(_ENV_FILE)
 
 
 def _writable_instance_dir(preferred: Path) -> Path:
@@ -37,6 +47,12 @@ def _writable_instance_dir(preferred: Path) -> Path:
     raised PermissionError on every worker's boot, so the platform's HTTP
     readiness check never succeeded and the deploy just timed out), fall
     back rather than crash-loop forever.
+
+    CHANGED: When DATABASE_URL is set, the fallback directory is used only
+    for uploads (photos/voice), never for the DB. Log that distinction at
+    INFO instead of WARNING so a correctly-configured deploy doesn't look
+    like it's misconfigured. When DATABASE_URL is missing *and* the
+    fallback is used, log at WARNING — that's the genuinely scary case.
     """
     try:
         preferred.mkdir(parents=True, exist_ok=True)
@@ -47,16 +63,43 @@ def _writable_instance_dir(preferred: Path) -> Path:
     except OSError:
         fallback = Path(tempfile.gettempdir()) / "county-ward-tracker-instance"
         fallback.mkdir(parents=True, exist_ok=True)
-        logger.warning(
-            "%s is not writable (read-only deploy filesystem?) — falling back to %s. "
-            "SQLite data and uploads here do NOT survive a restart/redeploy; "
-            "point DATABASE_URL at a real database before relying on this for anything but a demo.",
-            preferred, fallback,
-        )
+        if os.environ.get("DATABASE_URL"):
+            # DB is on a real server; only uploads land in /tmp.
+            logger.info(
+                "%s is not writable (read-only deploy filesystem) — using %s "
+                "for uploads only. DB is on DATABASE_URL, so no DB data is "
+                "at risk. NOTE: uploaded photos/voice notes will NOT survive "
+                "a redeploy; move uploads to object storage or a mounted "
+                "volume before this is anything but a demo.",
+                preferred, fallback,
+            )
+        else:
+            logger.warning(
+                "%s is not writable (read-only deploy filesystem?) — falling back to %s. "
+                "SQLite data and uploads here do NOT survive a restart/redeploy; "
+                "point DATABASE_URL at a real database before relying on this for anything but a demo.",
+                preferred, fallback,
+            )
         return fallback
 
 
 INSTANCE_DIR = _writable_instance_dir(BACKEND_ROOT / "instance")
+
+
+# CHANGED: Hard-fail in production when PHONE_HASH_SALT is unset. The
+# previous default ("dev-only-salt-change-in-prod") was documented as
+# insecure but nothing enforced replacing it. With a publicly-known salt,
+# phone-number hashes are trivially reversible for a space as small as
+# Kenyan MSISDNs. In dev, keep the old default so local runs still work.
+_PHONE_HASH_SALT_DEFAULT = "dev-only-salt-change-in-prod"
+_phone_hash_salt = os.environ.get("PHONE_HASH_SALT", "")
+if not _phone_hash_salt:
+    if _ON_PLATFORM or os.environ.get("FLASK_ENV") == "production":
+        raise RuntimeError(
+            "PHONE_HASH_SALT must be set in production. Generate one with: "
+            "python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+        )
+    _phone_hash_salt = _PHONE_HASH_SALT_DEFAULT
 
 
 class Config:
@@ -69,61 +112,57 @@ class Config:
         "DATABASE_URL", f"sqlite:///{INSTANCE_DIR / 'app.db'}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # CHANGED: Engine options. Without these, a slow or idle-closed
+    # connection to Render Postgres (Oregon) from a Paris runtime blocks
+    # the gunicorn worker until gunicorn's --timeout fires and SIGKILLs
+    # it. The browser then sees a dead socket and reports it as a CORS
+    # error ("no Access-Control-Allow-Origin header") because no response
+    # was ever produced. These options turn that into a visible 500.
+    #
+    #   pool_pre_ping    — detect Render's idle-closed connections (~5min)
+    #   pool_recycle     — recycle before Render's 300s idle timeout
+    #   connect_timeout  — bound TCP+auth handshake (seconds)
+    #   statement_timeout— let Postgres abort a runaway query at 15s
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+        "pool_size": 5,
+        "max_overflow": 5,
+        "connect_args": {
+            "connect_timeout": 10,
+            "options": "-c statement_timeout=15000",
+        },
+    }
+
     SEED_DATA_PATH = REPO_ROOT / "data" / "ward_projects.json"
     PHOTO_UPLOAD_DIR = INSTANCE_DIR / "uploads"
 
     # --- Languages ---
-    # Kiswahili is the primary/default language (most residents' shared
-    # language across this pilot's counties); English remains fully
-    # supported as a translation choice, and is also the fallback used when
-    # a specific string has no Kiswahili/Kikamba translation yet (see
-    # services/translation.py's t()).
     SUPPORTED_LANGUAGES = ["sw", "en", "kam"]
     DEFAULT_LANGUAGE = "sw"
 
     # --- Dispute aggregation (Section 5) ---
-    # Status flips to "Disputed" once this many INDEPENDENT reports disagree
-    # with the county-claimed status.
     DISPUTE_THRESHOLD_COUNT = int(os.environ.get("DISPUTE_THRESHOLD_COUNT", 3))
-    # "Independent" = different reporters whose GPS points are further apart
-    # than this radius. This is a documented proxy for "not the same
-    # household" since we have no household-level data to check against.
     DISPUTE_INDEPENDENCE_RADIUS_M = float(os.environ.get("DISPUTE_INDEPENDENCE_RADIUS_M", 500))
-    # Reports agreeing with the official status also need this many
-    # independent corroborations before a project is marked "Confirmed".
     CONFIRMATION_THRESHOLD_COUNT = int(os.environ.get("CONFIRMATION_THRESHOLD_COUNT", 2))
 
     # --- Spam / abuse defense (Section 6) ---
-    # One *active* report per (phone, project); an edit within this window
-    # updates the existing report instead of creating spam.
     REPORT_EDIT_WINDOW_HOURS = int(os.environ.get("REPORT_EDIT_WINDOW_HOURS", 24))
-    # Burst detection: more than this many reports from one phone within the
-    # window below gets auto-flagged and excluded from aggregation pending review.
     BURST_MAX_REPORTS = int(os.environ.get("BURST_MAX_REPORTS", 5))
     BURST_WINDOW_MINUTES = int(os.environ.get("BURST_WINDOW_MINUTES", 10))
-    # A brand-new number (no report history) reporting on more than this many
-    # distinct wards gets flagged for review rather than auto-trusted.
     NEW_NUMBER_MULTI_WARD_THRESHOLD = int(os.environ.get("NEW_NUMBER_MULTI_WARD_THRESHOLD", 3))
-    PHONE_HASH_SALT = os.environ.get("PHONE_HASH_SALT", "dev-only-salt-change-in-prod")
+
+    # CHANGED: value now resolved above (with a production hard-fail),
+    # rather than resolved inline with a known-insecure default.
+    PHONE_HASH_SALT = _phone_hash_salt
 
     # --- Ledger (Hedera) ---
-    # "stub" (default, no network calls, deterministic local hash-anchoring)
-    # or "hedera_sidecar" (calls the Node.js sidecar in ledger-sidecar/,
-    # requires real testnet credentials there).
     LEDGER_BACKEND = os.environ.get("LEDGER_BACKEND", "stub")
     LEDGER_SIDECAR_URL = os.environ.get("LEDGER_SIDECAR_URL", "http://localhost:4001")
-    # Free-tier Render (where ledger-sidecar/ is hosted) spins the service
-    # down after 15 minutes idle; the first request after that pays a cold
-    # start of up to ~60s. 10s (a reasonable default for an already-warm
-    # sidecar) was timing out on exactly that cold start in production —
-    # confirmed live via a ReadTimeoutError. 45s comfortably covers it
-    # without leaving a genuinely-hung sidecar call blocking the request
-    # forever.
     LEDGER_SIDECAR_TIMEOUT_S = float(os.environ.get("LEDGER_SIDECAR_TIMEOUT_S", "45"))
 
     # --- WhatsApp / SMS channel clients ---
-    # "dummy" (default, logs instead of sending — fully testable with no
-    # credentials) or "twilio" / "africas_talking" once real creds are set.
     WHATSAPP_BACKEND = os.environ.get("WHATSAPP_BACKEND", "dummy")
     SMS_BACKEND = os.environ.get("SMS_BACKEND", "dummy")
     TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
@@ -134,24 +173,12 @@ class Config:
     AFRICASTALKING_SHORTCODE = os.environ.get("AFRICASTALKING_SHORTCODE", "")
 
     # --- Speech-to-text (voice-to-text reporting) ---
-    # "dummy" (default, returns an empty transcript — no credentials needed)
-    # or "openai_whisper" once OPENAI_API_KEY is set. Only used for the
-    # native audio-upload path; the web build transcribes client-side via
-    # the browser's Web Speech API and never calls this.
     STT_BACKEND = os.environ.get("STT_BACKEND", "dummy")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
     VOICE_UPLOAD_DIR = INSTANCE_DIR / "voice_uploads"
 
     # --- Email notifications (SendByte) ---
-    # "dummy" (default, logs instead of sending — no credentials needed) or
-    # "sendbyte" once SENDBYTE_API_KEY is set (sandbox keys start sk_test_,
-    # see https://docs.sendbyte.africa/). Fires on every report/issue
-    # submission as a best-effort side notification to the county's contact
-    # address — see services/notifications.py.
     EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "dummy")
     SENDBYTE_API_KEY = os.environ.get("SENDBYTE_API_KEY", "")
     SENDBYTE_FROM_ADDRESS = os.environ.get("SENDBYTE_FROM_ADDRESS", "reports@wardtracker.ng")
-    # Real deployment would look up each county's own contact address; this
-    # pilot only ever seeds one county, so every notification goes to one
-    # configured test address.
     COUNTY_NOTIFICATION_EMAIL = os.environ.get("COUNTY_NOTIFICATION_EMAIL", "josephbill00@gmail.com")
