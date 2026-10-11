@@ -14,6 +14,20 @@ from app import create_app
 # Deliberately NOT called from app/__init__.py's create_app(): tests call
 # that many times per session via pytest fixtures, and configuring the
 # root logger from inside it would fight pytest's own log capture.
+
+import os
+from sqlalchemy.engine import make_url
+
+url = os.getenv("DATABASE_URL")
+
+if url:
+    parsed = make_url(url)
+    print("DB host:", parsed.host)
+    print("DB user:", parsed.username)
+    print("DB name:", parsed.database)
+else:
+    print("DATABASE_URL is missing")
+    
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO"),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
