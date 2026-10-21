@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import math
 from collections import Counter
+from typing import NamedTuple
 
 from ..config import Config
 from ..db import db
@@ -44,6 +45,19 @@ _CLAIM_TO_STATUS = {
 }
 
 
+class _ReportRow(NamedTuple):
+    """Lightweight stand-in for a Report ORM object inside _weights(). Loading
+    full ORM rows (with identity-map entries, lazy relationship state and
+    per-instance __dict__) for every active report is what pushed the free-tier
+    worker into OOM at the Report.query...all() call. These tuples carry only
+    the four fields the clustering math needs, which is ~10-20x less memory
+    per row."""
+    claim: str
+    gps_lat: float | None
+    gps_lon: float | None
+    reporter_id: str
+
+
 def _haversine_m(lat1, lon1, lat2, lon2) -> float:
     p1, p2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
@@ -52,12 +66,12 @@ def _haversine_m(lat1, lon1, lat2, lon2) -> float:
     return 2 * EARTH_RADIUS_M * math.asin(math.sqrt(a))
 
 
-def _cluster_independent(reports: list[Report]) -> list[list[Report]]:
+def _cluster_independent(reports: list[_ReportRow]) -> list[list[_ReportRow]]:
     """Greedy clustering: a report joins the first existing cluster whose
     representative (first member) is within DISPUTE_INDEPENDENCE_RADIUS_M;
     otherwise it starts a new cluster. Reports without GPS always start
     their own cluster. Returns one cluster per independent report/group."""
-    clusters: list[list[Report]] = []
+    clusters: list[list[_ReportRow]] = []
     for report in reports:
         if report.gps_lat is None or report.gps_lon is None:
             clusters.append([report])
@@ -79,8 +93,7 @@ def _cluster_independent(reports: list[Report]) -> list[list[Report]]:
 
 def _reputation_map(reporter_ids: list[str]) -> dict[str, float]:
     """One query for all reporter reputations instead of Reporter.query.get()
-    per report inside _cluster_weight (which was the second N+1 in the old
-    code and the OOM trigger on the free tier)."""
+    per report inside _cluster_weight (the second N+1 in the old code)."""
     if not reporter_ids:
         return {}
     rows = (
@@ -91,7 +104,7 @@ def _reputation_map(reporter_ids: list[str]) -> dict[str, float]:
     return {reporter_id: score for reporter_id, score in rows}
 
 
-def _cluster_weight(cluster: list[Report], reputation_by_id: dict[str, float]) -> float:
+def _cluster_weight(cluster: list[_ReportRow], reputation_by_id: dict[str, float]) -> float:
     """Section 6: reputation affects internal aggregation weighting only
     (never a public score). A cluster of one independent report from a
     reporter with the default reputation (1.0) counts as exactly 1 toward
@@ -108,25 +121,39 @@ def _cluster_weight(cluster: list[Report], reputation_by_id: dict[str, float]) -
     return sum(scores) / len(scores) if scores else 1.0
 
 
+def _load_report_rows(project_id: str) -> list[_ReportRow]:
+    """Load only the four fields clustering needs, as lightweight tuples
+    instead of full ORM objects. This is the OOM fix: the previous
+    Report.query...all() materialized every active report as a full
+    SQLAlchemy ORM instance (identity map entry + lazy relationship state +
+    __dict__), which is what killed the free-tier worker."""
+    rows = (
+        db.session.query(
+            Report.claim,
+            Report.gps_lat,
+            Report.gps_lon,
+            Report.reporter_id,
+        )
+        .filter_by(
+            project_id=project_id,
+            active=True,
+            excluded_from_aggregation=False,
+        )
+        .all()
+    )
+    return [_ReportRow(*row) for row in rows]
+
+
 def _weights(project: Project) -> dict:
     """Shared by recompute_verification_status() (which WRITES the result)
     and verification_progress() (a read-only view of the same numbers for
     the "X of Y independent reports" UI — gap-fill Section 3) so the two
-    never drift apart.
-
-    Memory note: we still materialize the project's active reports because
-    the greedy clustering needs each report's GPS, claim and reporter_id,
-    but we batch the Reporter lookup into one query (see _reputation_map)
-    instead of one query per report, which was the OOM trigger on the free
-    tier."""
-    active_reports = (
-        Report.query.filter_by(project_id=project.id, active=True, excluded_from_aggregation=False).all()
-    )
+    never drift apart."""
+    active_reports = _load_report_rows(project.id)
     agreement_map = _AGREEMENT_MATRIX.get(project.county_claimed_status, {})
     disagreeing = [r for r in active_reports if agreement_map.get(r.claim) is False]
     agreeing = [r for r in active_reports if agreement_map.get(r.claim) is True]
 
-    # One reputation lookup for every reporter appearing in either bucket.
     reporter_ids = {r.reporter_id for r in disagreeing} | {r.reporter_id for r in agreeing}
     reputation_by_id = _reputation_map(list(reporter_ids))
 
