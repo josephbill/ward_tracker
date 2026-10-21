@@ -124,16 +124,25 @@ class Config:
     #   pool_recycle     — recycle before Render's 300s idle timeout
     #   connect_timeout  — bound TCP+auth handshake (seconds)
     #   statement_timeout— let Postgres abort a runaway query at 15s
+    # --- Database connection options ---
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
         "pool_recycle": 280,
-        "pool_size": 5,
-        "max_overflow": 5,
-        "connect_args": {
-            "connect_timeout": 10,
-            "options": "-c statement_timeout=15000",
-        },
     }
+
+    # Apply PostgreSQL-specific options only when DATABASE_URL
+    # points to PostgreSQL. Local SQLite uses its own defaults.
+    _database_url = os.environ.get("DATABASE_URL", "")
+    if _database_url.startswith(("postgresql://", "postgres://")):
+        SQLALCHEMY_ENGINE_OPTIONS.update({
+            "pool_size": 5,
+            "max_overflow": 5,
+            "connect_args": {
+                "connect_timeout": 10,
+                "options": "-c statement_timeout=15000",
+            },
+        })
+   
 
     SEED_DATA_PATH = REPO_ROOT / "data" / "ward_projects.json"
     PHOTO_UPLOAD_DIR = INSTANCE_DIR / "uploads"
