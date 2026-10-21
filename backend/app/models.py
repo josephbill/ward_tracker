@@ -90,11 +90,23 @@ class Project(db.Model):
         A transient/detached instance (not yet added to a session, or built
         directly like Project(...) in tests) has no queryable `events`
         relationship — fall back the same way rather than erroring, since
-        to_dict() is expected to work on those too."""
+        to_dict() is expected to work on those too.
+
+        Cached per-instance so repeated to_dict() calls within the same
+        request don't each fire the same query. The cache lives only on this
+        Python object — a fresh instance (e.g. on the next request) re-queries.
+        """
         if object_session(self) is None:
             return self.created_at
+
+        cached = self.__dict__.get("_last_updated_cache")
+        if cached is not None:
+            return cached
+
         latest = self.events.order_by(StatusEvent.created_at.desc()).first()
-        return latest.created_at if latest is not None else self.created_at
+        result = latest.created_at if latest is not None else self.created_at
+        self.__dict__["_last_updated_cache"] = result
+        return result
 
     def to_dict(self) -> dict:
         last_updated = self.last_updated_at()
@@ -194,6 +206,18 @@ class StatusEvent(db.Model):
     dispute resolution. Anchored to the ledger via ledger_ref."""
 
     __tablename__ = "status_events"
+    __table_args__ = (
+        # Supports Project.last_updated_at()'s
+        # `ORDER BY created_at DESC LIMIT 1` filtered by project_id —
+        # without it, the per-project lookup becomes a full sort of that
+        # project's events, which grows linearly with the audit trail and
+        # was the slow path leading up to the worker SIGKILL.
+        db.Index(
+            "ix_status_events_project_created",
+            "project_id",
+            "created_at",
+        ),
+    )
 
     id = db.Column(db.String(32), primary_key=True, default=_uuid)
     project_id = db.Column(db.String(40), db.ForeignKey("projects.id"), nullable=False, index=True)
