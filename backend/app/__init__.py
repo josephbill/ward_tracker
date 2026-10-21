@@ -3,7 +3,7 @@ from flask_cors import CORS
 
 from .config import Config
 from .db import db
-
+from flask_migrate import Migrate
 
 def create_app(config_object: type = Config) -> Flask:
     app = Flask(__name__)
@@ -48,6 +48,7 @@ def create_app(config_object: type = Config) -> Flask:
     config_object.VOICE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     db.init_app(app)
+    migrate = Migrate(app,db)
 
     from .api.projects import projects_bp
     from .api.reports import reports_bp
