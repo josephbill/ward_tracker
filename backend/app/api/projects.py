@@ -72,24 +72,29 @@ def list_projects():
 
     delivered_count = sum(1 for p in projects if p.county_claimed_status == "delivered")
 
+    project_data = []
+
+    for p in projects:
+        data = p.to_dict()
+
+        project_data.append(
+            {
+                **data,
+                "project_name": p.display_name(lang),
+                "statement": render_project_statement(data, lang),
+                "verification_counts": verification_progress(p),
+            }
+        )
+
     return jsonify(
         {
             "lang": lang,
             "count": len(projects),
-            # "Purported" because this reflects the county's own claim, not
-            # citizen verification — see verification_status per project for
-            # what residents actually say.
-            "purported_completion_rate": (delivered_count / len(projects)) if projects else 0,
+            "purported_completion_rate": (
+                delivered_count / len(projects) if projects else 0
+            ),
             "delivered_count": delivered_count,
-            "projects": [
-                {
-                    **p.to_dict(),
-                    "project_name": p.display_name(lang),
-                    "statement": render_project_statement(p.to_dict(), lang),
-                    "verification_counts": verification_progress(p),
-                }
-                for p in projects
-            ],
+            "projects": project_data,
         }
     )
 
