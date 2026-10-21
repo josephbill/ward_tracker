@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, jsonify, request
 
 from ..db import db
-from ..models import Project
+from ..models import Project, Report
 from ..services.aggregation import verification_progress
 from ..services.translation import render_project_statement, supported_languages
 
@@ -102,11 +102,16 @@ def list_projects():
 @projects_bp.get("/projects/<project_id>")
 def get_project(project_id: str):
     lang = _lang_from_request()
-    project = Project.query.get(project_id)
+    project = db.session.get(Project, project_id)
     if project is None:
         return jsonify({"error": "not_found"}), 404
 
-    active_reports = [r.to_dict() for r in project.reports if r.active]
+    # Filter active reports at the SQL level rather than loading every report
+    # via the relationship and filtering in Python.
+    active_reports = [
+        r.to_dict()
+        for r in Report.query.filter_by(project_id=project.id, active=True).all()
+    ]
     return jsonify(
         {
             **project.to_dict(),

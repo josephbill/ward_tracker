@@ -77,7 +77,21 @@ def _cluster_independent(reports: list[Report]) -> list[list[Report]]:
     return clusters
 
 
-def _cluster_weight(cluster: list[Report]) -> float:
+def _reputation_map(reporter_ids: list[str]) -> dict[str, float]:
+    """One query for all reporter reputations instead of Reporter.query.get()
+    per report inside _cluster_weight (which was the second N+1 in the old
+    code and the OOM trigger on the free tier)."""
+    if not reporter_ids:
+        return {}
+    rows = (
+        db.session.query(Reporter.id, Reporter.reputation_score)
+        .filter(Reporter.id.in_(reporter_ids))
+        .all()
+    )
+    return {reporter_id: score for reporter_id, score in rows}
+
+
+def _cluster_weight(cluster: list[Report], reputation_by_id: dict[str, float]) -> float:
     """Section 6: reputation affects internal aggregation weighting only
     (never a public score). A cluster of one independent report from a
     reporter with the default reputation (1.0) counts as exactly 1 toward
@@ -86,8 +100,11 @@ def _cluster_weight(cluster: list[Report]) -> float:
     Averaged across a cluster's members so one independent "voice" is
     weighted consistently regardless of how many reports happened to land
     in the same location bucket."""
-    reporters = [Reporter.query.get(r.reporter_id) for r in cluster]
-    scores = [rep.reputation_score for rep in reporters if rep is not None]
+    scores = [
+        reputation_by_id[r.reporter_id]
+        for r in cluster
+        if r.reporter_id in reputation_by_id
+    ]
     return sum(scores) / len(scores) if scores else 1.0
 
 
@@ -95,7 +112,13 @@ def _weights(project: Project) -> dict:
     """Shared by recompute_verification_status() (which WRITES the result)
     and verification_progress() (a read-only view of the same numbers for
     the "X of Y independent reports" UI — gap-fill Section 3) so the two
-    never drift apart."""
+    never drift apart.
+
+    Memory note: we still materialize the project's active reports because
+    the greedy clustering needs each report's GPS, claim and reporter_id,
+    but we batch the Reporter lookup into one query (see _reputation_map)
+    instead of one query per report, which was the OOM trigger on the free
+    tier."""
     active_reports = (
         Report.query.filter_by(project_id=project.id, active=True, excluded_from_aggregation=False).all()
     )
@@ -103,8 +126,16 @@ def _weights(project: Project) -> dict:
     disagreeing = [r for r in active_reports if agreement_map.get(r.claim) is False]
     agreeing = [r for r in active_reports if agreement_map.get(r.claim) is True]
 
-    disagree_weight = sum(_cluster_weight(c) for c in _cluster_independent(disagreeing))
-    agree_weight = sum(_cluster_weight(c) for c in _cluster_independent(agreeing))
+    # One reputation lookup for every reporter appearing in either bucket.
+    reporter_ids = {r.reporter_id for r in disagreeing} | {r.reporter_id for r in agreeing}
+    reputation_by_id = _reputation_map(list(reporter_ids))
+
+    disagree_weight = sum(
+        _cluster_weight(c, reputation_by_id) for c in _cluster_independent(disagreeing)
+    )
+    agree_weight = sum(
+        _cluster_weight(c, reputation_by_id) for c in _cluster_independent(agreeing)
+    )
 
     return {
         "active_reports": active_reports,
