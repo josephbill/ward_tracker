@@ -21,24 +21,7 @@ def create_app(config_object: type = Config) -> Flask:
     # origin (e.g. :19100) and calls this API (e.g. :5055) cross-origin.
     # Native iOS/Android builds don't enforce CORS, so this only matters for
     # the web preview target used in local dev/demo.
-    CORS(
-    app,
-    resources={
-        r"/api/*": {
-            "origins": [
-                "https://wardtrackermobile.pxxlspace.cv"
-            ]
-        }
-    },
-    methods=[
-        "GET", "POST", "PUT", "PATCH",
-        "DELETE", "OPTIONS"
-    ],
-    allow_headers=[
-        "Content-Type",
-        "Authorization"
-    ]
-    )
+    CORS(app)
 
     # config.py's _writable_instance_dir() already created (and confirmed
     # writable) the base instance directory these live under — falling back
